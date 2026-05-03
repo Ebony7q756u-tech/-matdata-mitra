@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║           MATDATA MITRA — India Election Assistant           ║
+  ║              Powered by Google Gemini AI                     ║
+  ╠══════════════════════════════════════════════════════════════╣
+  ║  SECURITY NOTICE (READ BEFORE EDITING):                      ║
+  ║  • NO API keys are stored in this file — safe for GitHub     ║
+  ║  • Users enter their OWN Gemini key at runtime               ║
+  ║  • Key lives in browser memory only — never on disk          ║
+  ║  • NEVER paste your API key directly into this source code   ║
+  ║  • NEVER commit a version with a real key inside it          ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Matdata Mitra — India Election Assistant</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a1a; }
+    @keyframes bounce    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes float     { 0%,100%{transform:translateY(0) translateX(0)} 25%{transform:translateY(-20px) translateX(10px)} 75%{transform:translateY(10px) translateX(-10px)} }
+    @keyframes shimmer   { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+    @keyframes pulse     { 0%,100%{opacity:0.4} 50%{opacity:1} }
+    @keyframes rotateSlow{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes fadeSlideIn{ from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes borderGlow{ 0%,100%{box-shadow:0 0 10px rgba(66,133,244,0.3)} 50%{box-shadow:0 0 25px rgba(66,133,244,0.5)} }
+    @keyframes fadeIn    { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes mapPulse  { 0%,100%{opacity:0.18} 50%{opacity:0.28} }
+    @keyframes ticker    { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    @keyframes evmBlink  { 0%,100%{opacity:0.6} 50%{opacity:1} }
+    @keyframes slideUp   { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes correctFlash{ 0%{box-shadow:0 0 0 0 rgba(52,168,83,0.7)} 100%{box-shadow:0 0 0 18px rgba(52,168,83,0)} }
+    @keyframes wrongShake{ 0%,100%{transform:translateX(0)} 25%,75%{transform:translateX(-5px)} 50%{transform:translateX(5px)} }
+    @keyframes gemSpin   { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+    @keyframes modSlideUp{ from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes progressPop{ 0%{transform:scaleX(0)} 100%{transform:scaleX(1)} }
+    @keyframes micPulse   { 0%,100%{box-shadow:0 0 0 0 rgba(234,67,53,0.6)} 50%{box-shadow:0 0 0 10px rgba(234,67,53,0)} }
+    .share-btn:hover { opacity:1 !important; transform:scale(1.1) !important; }
+    .lang-btn:hover  { background:rgba(255,153,51,0.22) !important; }
+
+    .msg-bubble  { animation: fadeSlideIn 0.4s ease forwards; }
+    .quick-btn:hover { transform:translateY(-2px) scale(1.03) !important; background:rgba(66,133,244,0.25) !important; border-color:#4285F4 !important; }
+    .send-btn:hover  { transform:scale(1.08) !important; }
+    .tab-btn     { transition: all 0.22s ease !important; }
+    .option-btn  { transition: all 0.18s !important; }
+    .option-btn:hover:not([disabled]) { transform:translateX(5px) !important; }
+    .calendar-item { transition: all 0.2s !important; }
+    .calendar-item:hover { transform:translateX(7px) !important; box-shadow:0 4px 18px rgba(0,0,0,0.22) !important; }
+    .check-item  { transition: all 0.25s !important; cursor:pointer; }
+    .check-item:hover { transform:translateX(5px) !important; }
+    .quick-state-btn:hover { background:rgba(255,153,51,0.18) !important; border-color:rgba(255,153,51,0.6) !important; }
+    .fab-btn:hover .fab-tip { opacity:1 !important; transform:translateX(0) !important; }
+    .fab-btn:hover  { transform:scale(1.1) !important; }
+    .mod-panel   { animation: modSlideUp 0.38s cubic-bezier(.4,0,.2,1) forwards; }
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(66,133,244,0.4); border-radius:2px; }
+    select,input { outline:none; transition: border-color 0.2s, box-shadow 0.2s; }
+    input:focus  { border-color:rgba(66,133,244,0.65) !important; box-shadow:0 0 14px rgba(66,133,244,0.22) !important; }
+    select:focus { border-color:rgba(255,153,51,0.65) !important; box-shadow:0 0 14px rgba(255,153,51,0.22) !important; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+// ─── INDIA MAP SVG ───────────────────────────────────────────────────────────
+const INDIA_MAP_SVG = [
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 900" width="100%" height="100%">',
+  '<defs><radialGradient id="mapGlow" cx="50%" cy="50%" r="50%">',
+  '<stop offset="0%" stop-color="#FF9933" stop-opacity="0.3"/>',
+  '<stop offset="50%" stop-color="#138808" stop-opacity="0.15"/>',
+  '<stop offset="100%" stop-color="#000080" stop-opacity="0.05"/>',
+  '</radialGradient>',
+  '<filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/>',
+  '<feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
+  '</defs>',
+  '<path d="M370,60 L400,55 L430,65 L460,80 L480,100 L490,130 L500,160 L510,180 L530,190 L550,200 L570,220 L580,250 L570,280 L560,300 L570,320 L580,340 L570,360 L550,380 L530,400 L520,420 L530,440 L540,460 L530,480 L510,500 L490,520 L470,540 L450,560 L430,580 L420,600 L410,620 L400,640 L390,660 L380,680 L370,700 L360,720 L350,740 L345,760 L350,770 L360,760 L370,750 L375,760 L370,775 L360,785 L350,790 L340,795 L330,790 L320,780 L310,770 L300,760 L290,750 L280,740 L270,730 L260,720 L250,710 L240,700 L230,690 L240,680 L250,670 L260,660 L250,650 L240,640 L230,630 L220,620 L210,610 L200,600 L190,590 L180,580 L170,570 L160,560 L150,550 L140,540 L150,520 L160,500 L170,480 L160,460 L150,440 L160,420 L170,400 L180,380 L190,360 L200,340 L210,320 L220,300 L230,280 L240,260 L250,240 L260,220 L270,200 L280,180 L290,160 L300,140 L310,120 L320,105 L335,90 L355,70 Z" fill="rgba(255,153,51,0.15)" stroke="rgba(255,153,51,0.6)" stroke-width="2" filter="url(#glow)"/>',
+  '<ellipse cx="400" cy="430" rx="200" ry="250" fill="url(#mapGlow)" opacity="0.4"/>',
+  '<circle cx="400" cy="400" r="3" fill="#FF9933" opacity="0.8"/>',
+  '<circle cx="350" cy="300" r="2" fill="#138808" opacity="0.6"/>',
+  '<circle cx="450" cy="280" r="2" fill="#138808" opacity="0.6"/>',
+  '<circle cx="380" cy="500" r="2" fill="#000080" opacity="0.6"/>',
+  '</svg>'
+].join('');
+
+// ─── SYSTEM PROMPT ───────────────────────────────────────────────────────────
+const SYSTEM_PROMPT = `You are "Matdata Mitra" (Voter's Friend), an expert Indian Election Assistant. You help users understand India's election process in a friendly, clear, and engaging way.
+
+You know everything about: Types of elections (Lok Sabha, Rajya Sabha, Vidhan Sabha, etc.), Election Commission of India, Model Code of Conduct, Voter registration, Election timeline, NOTA, EVM and VVPAT, Constituency delimitation, Reserved seats, Election symbols, Key election laws (RPA 1951/1950), Vote counting and results.
+
+Respond warmly, use emojis occasionally, keep responses concise but informative. When explaining processes, use numbered steps. Encourage democratic participation. Format key terms in **bold**. Stay neutral and factual.
+
+If asked something unrelated, gently redirect: "I'm your election guide! Let me help you understand India's democratic process instead. 🗳️"`;
+
+// ─── QUICK QUESTIONS ─────────────────────────────────────────────────────────
+const QUICK_QUESTIONS = [
+  { label:"🗳️ How to Register?",   q:"How can I register as a voter in India? What is the process?" },
+  { label:"📅 Election Timeline",   q:"Explain the complete election timeline from announcement to results." },
+  { label:"🏛️ Lok Sabha vs Rajya", q:"What is the difference between Lok Sabha and Rajya Sabha elections?" },
+  { label:"⚙️ How does EVM work?", q:"How does the Electronic Voting Machine (EVM) and VVPAT work?" },
+  { label:"📜 Model Code",          q:"What is the Model Code of Conduct and when does it apply?" },
+  { label:"🔢 Vote Counting",       q:"How are votes counted after polling day in India?" },
+];
+
+// ─── OFFLINE Q&A ─────────────────────────────────────────────────────────────
+const OFFLINE_QA = [
+  { q:["register","voter","registration","form 6","enroll"], a:"**How to Register as a Voter:**\n1. Visit **voters.eci.gov.in** or Voter Helpline App\n2. Fill **Form 6** (new registration)\n3. Upload ID proof, address proof & photo\n4. Submit and note your reference number\n5. BLO will verify at your address\n6. Receive **EPIC (Voter ID Card)** within 30 days\n\n📞 Voter Helpline: **1950**" },
+  { q:["evm","electronic voting machine","voting machine"], a:"**How EVM Works:**\n1. Two units — **Control Unit** (with officer) and **Balloting Unit** (in booth)\n2. Officer presses 'Ballot' button to enable voting\n3. Voter presses button next to candidate's name/symbol\n4. A beep confirms your vote\n5. **VVPAT** prints a slip for 7 seconds\n6. Votes stored securely — no internet connection!" },
+  { q:["lok sabha","lower house","parliament election","mp election"], a:"**Lok Sabha Elections:**\n- **543 constituencies** across India\n- Each elects **1 MP** (Member of Parliament)\n- Elections every **5 years**\n- **First Past the Post** system\n- Minimum age to contest: **25 years**" },
+  { q:["rajya sabha","upper house","council of states"], a:"**Rajya Sabha Elections:**\n- **245 seats** (233 elected + 12 nominated)\n- Members elected by **State MLAs** — NOT directly by public\n- Term: **6 years**, 1/3rd retire every 2 years\n- Minimum age: **30 years**\n- Never dissolved — **permanent body**" },
+  { q:["model code","mcc","conduct"], a:"**Model Code of Conduct:**\n- Applies from **election announcement** to **results**\n- No new government schemes, no use of govt resources\n- No communal/caste appeals\n- Rallies need police permission\n- Enforced by **Election Commission of India**" },
+  { q:["vote count","counting","result","how result"], a:"**How Votes Are Counted:**\n1. Counting starts on **counting day**\n2. **Postal ballots** counted first\n3. EVM results counted round by round\n4. Returning Officer declares winner\n5. Results posted live on **ECI website**" },
+  { q:["nota","none of above"], a:"**NOTA:**\n- Introduced in **2013** after Supreme Court order\n- Last option on EVM ballot — ballot with cross ✗\n- NOTA votes counted but **do NOT affect result**\n- Purpose: send message of disapproval" },
+  { q:["vvpat","paper trail","paper slip"], a:"**VVPAT:**\n- Attached to every EVM since **2013**\n- Prints slip showing candidate name, symbol, serial number\n- Visible for **7 seconds** through glass window\n- Used for **cross-verification** of EVM results" },
+  { q:["election commission","eci","chief election commissioner"], a:"**Election Commission of India:**\n- Constitutional body under **Article 324**\n- Established **25 January 1950**\n- Headed by **Chief Election Commissioner**\n- Powers: Conduct all elections, enforce MCC, register parties, allot symbols" },
+  { q:["voter id","epic card"], a:"**Getting Voter ID (EPIC Card):**\n- Apply at **voters.eci.gov.in** or offline at BLO\n- Documents: Age proof, Address proof, Photo\n- Fill **Form 6** for new registration\n- Also available as **e-EPIC** (digital PDF)\n- Download using registered mobile number" },
+  { q:["postal ballot","absentee voting"], a:"**Postal Ballot:**\n- For: Armed forces, police on duty, senior citizens 85+, PwD 40%+\n- Apply with **Form 12D**\n- Counted **before** EVM votes on counting day" },
+  { q:["constitution","article 324","electoral"], a:"**Constitutional Provisions:**\n- **Article 324**: ECI superintendence of elections\n- **Article 325**: No exclusion from rolls on religion/race/caste/sex\n- **Article 326**: Adult suffrage at 18 years\n- **Article 329**: Courts cannot interfere in election process" },
+  { q:["age","eligibility","who can vote"], a:"**Voter Eligibility:**\n- Minimum age: **18 years** (as on January 1)\n- Must be **Indian citizen**\n- Resident of the constituency\n- Mentally sound\n- Not serving imprisonment\n- Register via **Form 6** at voters.eci.gov.in" },
+  { q:["local body","panchayat","municipal"], a:"**Local Body Elections:**\n- Include Gram Panchayat, Municipal Corporation, etc.\n- Conducted by **State Election Commission** (not ECI)\n- Elections every **5 years**\n- Reservations for Women, SC, ST, OBC vary by state" },
+];
+
+// ─── ELECTION BG SVG ─────────────────────────────────────────────────────────
+const ELECTION_BG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="100%" height="100%">
+  <defs>
+    <radialGradient id="indiaGlow" cx="50%" cy="48%" r="42%">
+      <stop offset="0%" stop-color="#FF9933" stop-opacity="0.22"/>
+      <stop offset="45%" stop-color="#138808" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#000080" stop-opacity="0.04"/>
+    </radialGradient>
+    <filter id="softGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g transform="translate(350,20) scale(0.65)" filter="url(#softGlow)" style="animation:mapPulse 4s ease-in-out infinite">
+    <path d="M370,60 L400,55 L430,65 L460,80 L480,100 L490,130 L500,160 L510,180 L530,190 L550,200 L570,220 L580,250 L570,280 L560,300 L570,320 L580,340 L570,360 L550,380 L530,400 L520,420 L530,440 L540,460 L530,480 L510,500 L490,520 L470,540 L450,560 L430,580 L420,600 L410,620 L400,640 L390,660 L380,680 L370,700 L360,720 L350,740 L345,760 L350,770 L360,760 L370,750 L375,760 L370,775 L360,785 L350,790 L340,795 L330,790 L320,780 L310,770 L300,760 L290,750 L280,740 L270,730 L260,720 L250,710 L240,700 L230,690 L240,680 L250,670 L260,660 L250,650 L240,640 L230,630 L220,620 L210,610 L200,600 L190,590 L180,580 L170,570 L160,560 L150,550 L140,540 L150,520 L160,500 L170,480 L160,460 L150,440 L160,420 L170,400 L180,380 L190,360 L200,340 L210,320 L220,300 L230,280 L240,260 L250,240 L260,220 L270,200 L280,180 L290,160 L300,140 L310,120 L320,105 L335,90 L355,70 Z"
+      fill="rgba(255,153,51,0.1)" stroke="rgba(255,153,51,0.55)" stroke-width="2.5"/>
+    <circle cx="340" cy="200" r="6" fill="#FF9933" opacity="0.8" style="animation:evmBlink 2s infinite"/>
+    <circle cx="340" cy="200" r="12" fill="none" stroke="#FF9933" stroke-width="1.5" opacity="0.4"/>
+    <text x="354" y="196" fill="rgba(255,153,51,0.7)" font-size="10" font-family="Georgia">New Delhi ★</text>
+  </g>
+  <text x="80" y="300" fill="rgba(255,153,51,0.06)" font-size="60" font-family="Georgia" font-weight="bold" transform="rotate(-20,80,300)">VOTE</text>
+  <text x="950" y="700" fill="rgba(19,136,8,0.06)" font-size="55" font-family="Georgia" font-weight="bold" transform="rotate(15,950,700)">मतदान</text>
+  <text x="100" y="650" fill="rgba(0,0,128,0.05)" font-size="45" font-family="Georgia" font-weight="bold" transform="rotate(-10,100,650)">लोकतंत्र</text>
+  <text x="25" y="820" fill="rgba(255,153,51,0.2)" font-size="52" font-family="Georgia">☝</text>
+</svg>`;
+
+// ─── THEMES ──────────────────────────────────────────────────────────────────
+const THEMES = {
+  dark: {
+    bg:"linear-gradient(135deg,#0a0a1a 0%,#0d1b2a 30%,#0d0d1f 60%,#0a1a0a 100%)",
+    headerBg:"rgba(0,0,0,0.55)", quickBg:"rgba(0,0,0,0.35)", inputBg:"rgba(0,0,0,0.6)",
+    cardBg:"rgba(255,255,255,0.04)", panelBg:"rgba(10,12,28,0.6)",
+    userBubble:"linear-gradient(135deg,rgba(66,133,244,0.2),rgba(52,168,83,0.1))",
+    userBorder:"1px solid rgba(66,133,244,0.4)",
+    text:"rgba(255,255,255,0.9)", subText:"rgba(255,255,255,0.5)", dimText:"rgba(255,255,255,0.25)",
+    borderColor:"rgba(255,255,255,0.08)", statusBg:"rgba(10,10,26,0.92)",
+    inputField:"rgba(255,255,255,0.06)", selectBg:"rgba(20,22,40,0.9)",
+    mapOpacity:0.18,
+  },
+  light: {
+    bg:"linear-gradient(135deg,#f0f4ff 0%,#fff9f0 30%,#f0fff4 60%,#fff0f4 100%)",
+    headerBg:"rgba(255,255,255,0.85)", quickBg:"rgba(255,255,255,0.6)", inputBg:"rgba(255,255,255,0.85)",
+    cardBg:"rgba(255,255,255,0.75)", panelBg:"rgba(255,255,255,0.55)",
+    userBubble:"linear-gradient(135deg,rgba(66,133,244,0.15),rgba(52,168,83,0.08))",
+    userBorder:"1px solid rgba(66,133,244,0.35)",
+    text:"rgba(20,20,40,0.9)", subText:"rgba(20,20,40,0.55)", dimText:"rgba(20,20,40,0.3)",
+    borderColor:"rgba(0,0,0,0.08)", statusBg:"rgba(240,244,255,0.96)",
+    inputField:"rgba(255,255,255,0.9)", selectBg:"rgba(255,255,255,0.95)",
+    mapOpacity:0.10,
+  }
+};
+
+// ─── NEW CONSTANTS ────────────────────────────────────────────────────────────
+const INDIA_STATES = [
+  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
+  "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka",
+  "Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram",
+  "Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu",
+  "Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
+  "Delhi (NCT)","Jammu & Kashmir","Ladakh (UT)","Puducherry","Chandigarh (UT)",
+  "Lakshadweep","Andaman & Nicobar"
+];
+
+const UPCOMING_ELECTIONS = [
+  { state:"West Bengal",    type:"Vidhan Sabha", seats:294, date:"Apr–May 2026", year:2026, status:"imminent", color:"#EA4335" },
+  { state:"Tamil Nadu",     type:"Vidhan Sabha", seats:234, date:"Apr–May 2026", year:2026, status:"imminent", color:"#EA4335" },
+  { state:"Kerala",         type:"Vidhan Sabha", seats:140, date:"Apr–May 2026", year:2026, status:"imminent", color:"#EA4335" },
+  { state:"Assam",          type:"Vidhan Sabha", seats:126, date:"Apr–May 2026", year:2026, status:"imminent", color:"#EA4335" },
+  { state:"Puducherry",     type:"Legislature",  seats:30,  date:"Apr–May 2026", year:2026, status:"imminent", color:"#EA4335" },
+  { state:"Uttar Pradesh",  type:"Vidhan Sabha", seats:403, date:"Feb–Mar 2027", year:2027, status:"upcoming", color:"#FF9933" },
+  { state:"Punjab",         type:"Vidhan Sabha", seats:117, date:"Feb 2027",     year:2027, status:"upcoming", color:"#FF9933" },
+  { state:"Goa",            type:"Vidhan Sabha", seats:40,  date:"Feb 2027",     year:2027, status:"upcoming", color:"#FF9933" },
+  { state:"Manipur",        type:"Vidhan Sabha", seats:60,  date:"Feb–Mar 2027", year:2027, status:"upcoming", color:"#FF9933" },
+  { state:"Uttarakhand",    type:"Vidhan Sabha", seats:70,  date:"Feb 2027",     year:2027, status:"upcoming", color:"#FF9933" },
+  { state:"Gujarat",        type:"Vidhan Sabha", seats:182, date:"Nov–Dec 2027", year:2027, status:"future",   color:"#FBBC05" },
+  { state:"Himachal Pradesh",type:"Vidhan Sabha",seats:68,  date:"Nov 2027",     year:2027, status:"future",   color:"#FBBC05" },
+  { state:"Karnataka",      type:"Vidhan Sabha", seats:224, date:"May 2028",     year:2028, status:"future",   color:"#34A853" },
+  { state:"Rajasthan",      type:"Vidhan Sabha", seats:200, date:"Nov–Dec 2028", year:2028, status:"future",   color:"#34A853" },
+  { state:"Madhya Pradesh", type:"Vidhan Sabha", seats:230, date:"Nov–Dec 2028", year:2028, status:"future",   color:"#34A853" },
+  { state:"Telangana",      type:"Vidhan Sabha", seats:119, date:"Nov–Dec 2028", year:2028, status:"future",   color:"#34A853" },
+];
+
+const VOTER_ID_STEPS = [
+  { id:1, icon:"🎂", title:"Confirm Eligibility",    desc:"18+ as on Jan 1st, Indian citizen, resident of constituency. Not disqualified by any court." },
+  { id:2, icon:"🌐", title:"Visit Official Portal",  desc:"Go to voters.eci.gov.in or install the 'Voter Helpline' app (Android/iOS). Both are free." },
+  { id:3, icon:"📝", title:"Fill Form 6",            desc:"Click 'New Registration for General Voter' → Fill Form 6 with name, DOB, address, gender." },
+  { id:4, icon:"📎", title:"Upload Documents",       desc:"Age proof (Aadhaar/Birth cert), Address proof (bill/bank statement), Recent passport photo." },
+  { id:5, icon:"🚀", title:"Submit Application",     desc:"Submit the form online and SAVE your Application Reference Number (ARN) for tracking." },
+  { id:6, icon:"🔔", title:"Await BLO Visit",        desc:"Booth Level Officer will visit your address for physical verification (usually within 30 days)." },
+  { id:7, icon:"🔍", title:"Track Application",      desc:"Visit voters.eci.gov.in → 'Track Application Status' using your ARN or registered mobile." },
+  { id:8, icon:"📱", title:"Download e-EPIC",        desc:"Get your instant Digital Voter ID from the Voter Helpline App. Enter OTP on registered mobile." },
+  { id:9, icon:"🪪", title:"Receive Physical Card",  desc:"Physical EPIC card posted to your address. Also collectable from the ERO (Electoral Registration Officer) office." },
+  { id:10,icon:"✔️", title:"Verify on Voter List",   desc:"Before election day, confirm your name at electoralsearch.in or call Voter Helpline 1950." },
+];
+
+const NEWS_TICKER = [
+  "🗳️ ECI to deploy 10.5 lakh polling booths for 2026 state elections",
+  "📊 India crosses 97 crore registered voters — world's largest electorate",
+  "⚙️ 100% VVPAT coverage achieved across all 543 Lok Sabha constituencies",
+  "📱 e-EPIC (Digital Voter ID) downloaded by 55 crore+ voters nationwide",
+  "🏛️ UP, Punjab, Goa, Manipur & Uttarakhand gearing up for 2027 Vidhan Sabha polls",
+  "☝ National Voters Day (Jan 25) — 38 lakh new voters enrolled in 2026",
+  "📞 Voter Helpline 1950 now available 24×7 in 22 regional languages",
+  "📅 Delimitation Commission likely after 2026 Census for seat reallocation",
+  "🔍 ECI Flying Squads seized ₹8,000+ crore in cash/liquor in 2024 General Elections",
+  "⚠️ Model Code of Conduct in force across poll-bound state assembly zones",
+  "🚀 SVEEP 2026: 'No Voter Left Behind' campaign targets 100% enrollment",
+  "🇮🇳 West Bengal, Tamil Nadu, Kerala, Assam election schedules announced by ECI",
+];
+
+const TABS = [
+  { id:"chat",      icon:"💬", label:"AI Chat" },
+  { id:"states",    icon:"🗺️", label:"State Info" },
+  { id:"quiz",      icon:"🧠", label:"Quiz" },
+  { id:"finder",    icon:"📍", label:"Finder" },
+  { id:"calendar",  icon:"📅", label:"Calendar" },
+  { id:"checklist", icon:"✅", label:"Voter ID" },
+];
+
+const DAILY_LIMIT = 50;
+const COOLDOWN_SECONDS = 60;
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function findOfflineAnswer(question) {
+  const q = question.toLowerCase();
+  let best = null, bestScore = 0;
+  OFFLINE_QA.forEach(item => {
+    let score = 0;
+    item.q.forEach(kw => { if (q.includes(kw)) score++; });
+    if (score > bestScore) { bestScore = score; best = item; }
+  });
+  if (best && bestScore > 0) return best.a;
+  return "🗳️ I have **pre-loaded answers** on Indian elections! Try asking about:\n- Voter registration, EVM, VVPAT\n- Lok Sabha, Rajya Sabha, Vidhan Sabha\n- Election timeline, MCC, Counting\n- Voter ID, Postal ballot, Symbols\n\n*(API temporarily offline — answers from built-in knowledge base)*";
+}
+
+function fmtText(text, keyColor = "#4285F4") {
+  return text.split("\n").map((line, i) => {
+    const f = line
+      .replace(/\*\*(.*?)\*\*/g, `<strong style="color:${keyColor}">$1</strong>`)
+      .replace(/^(\d+\.)\s/, '<span style="color:#34A853;font-weight:700">$1</span> ')
+      .replace(/^[-•▸]\s?/, `<span style="color:${keyColor}">▸</span> `);
+    return React.createElement("div", { key:i, style:{marginBottom:line?"4px":"8px"}, dangerouslySetInnerHTML:{__html:f||"&nbsp;"} });
+  });
+}
+
+// ─── TYPING DOTS ─────────────────────────────────────────────────────────────
+const TypingDots = () => (
+  <div style={{ display:"flex", gap:"5px", alignItems:"center", padding:"4px 0" }}>
+    {[0,1,2].map(i => (
+      <div key={i} style={{ width:8, height:8, borderRadius:"50%",
+        background:"linear-gradient(135deg,#4285F4,#34A853)",
+        animation:`bounce 1.2s ease-in-out ${i*0.2}s infinite` }}/>
+    ))}
+  </div>
+);
+
+// ─── STATES PANEL ─────────────────────────────────────────────────────────────
+function StatesPanel({ callGeminiDirect, T, darkMode }) {
+  const [selected, setSelected] = useState("");
+  const [info, setInfo] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const QUICK_STATES = ["Uttar Pradesh","Maharashtra","West Bengal","Tamil Nadu","Rajasthan","Bihar","Gujarat","Karnataka"];
+
+  const getInfo = async (st) => {
+    const state = st || selected;
+    if (!state) return;
+    setSelected(state);
+    setLoading(true);
+    setInfo("");
+    try {
+      const r = await callGeminiDirect(
+        `You are an Indian elections expert. Provide detailed election information for: **${state}**. Include: 1) Current Chief Minister & party 2) Total Vidhan Sabha seats 3) Lok Sabha seats allocated 4) Last state election year & result brief 5) Estimated next election year 6) Key political parties 7) Approximate voter turnout in last election 8) One interesting election fact about this state. Use **bold** for key terms. Be factual and concise.`
+      );
+      setInfo(r);
+    } catch(e) {
+      setInfo("⚠️ Error: " + e.message + "\n\nPlease verify at **eci.gov.in** for official state election data.");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ padding:"20px 16px 100px", maxWidth:700, margin:"0 auto", animation:"slideUp 0.3s ease" }}>
+      <div style={{ marginBottom:18 }}>
+        <div style={{ fontSize:18, fontWeight:"bold", color:"#FF9933", marginBottom:4, letterSpacing:1 }}>🗺️ State Election Information</div>
+        <div style={{ fontSize:12, color:T.subText }}>Select any Indian state or UT to get AI-powered election details</div>
+      </div>
+
+      <div style={{ display:"flex", gap:10, marginBottom:14, flexWrap:"wrap" }}>
+        <select value={selected} onChange={e => { setSelected(e.target.value); setInfo(""); }}
+          style={{ flex:1, minWidth:190, padding:"12px 14px", borderRadius:12,
+            background:darkMode?"rgba(20,22,40,0.9)":"rgba(255,255,255,0.95)",
+            border:"1px solid rgba(255,153,51,0.45)", color:T.text, fontSize:13, fontFamily:"Georgia,serif", cursor:"pointer" }}>
+          <option value="">— Select State / UT —</option>
+          {INDIA_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <button onClick={() => getInfo()} disabled={!selected||loading}
+          style={{ padding:"12px 22px", borderRadius:12, border:"none",
+            background:selected&&!loading?"linear-gradient(135deg,#FF9933,#e65c00)":"rgba(255,255,255,0.08)",
+            color:"white", fontWeight:"bold", cursor:selected&&!loading?"pointer":"default",
+            fontSize:13, fontFamily:"Georgia,serif",
+            boxShadow:selected?"0 4px 18px rgba(255,153,51,0.35)":"none" }}>
+          {loading?"⏳ Loading...":"🔍 Get Info"}
+        </button>
+      </div>
+
+      {/* Quick state pills */}
+      {!info && !loading && (
+        <div style={{ marginBottom:18 }}>
+          <div style={{ fontSize:11, color:T.dimText, letterSpacing:1, marginBottom:8 }}>QUICK SELECT</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+            {QUICK_STATES.map(s => (
+              <button key={s} className="quick-state-btn" onClick={() => getInfo(s)}
+                style={{ padding:"6px 13px", borderRadius:14,
+                  border:"1px solid rgba(255,153,51,0.3)", background:"rgba(255,153,51,0.07)",
+                  color:T.text, fontSize:11, cursor:"pointer", fontFamily:"Georgia,serif", transition:"all 0.2s" }}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div style={{ textAlign:"center", padding:"48px 0" }}>
+          <div style={{ width:48, height:48, borderRadius:"50%", background:"linear-gradient(135deg,#FF9933,#138808)",
+            animation:"gemSpin 1s linear infinite", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:22, marginBottom:14 }}>🗺️</div>
+          <div style={{ color:T.subText, fontSize:12, letterSpacing:2 }}>GEMINI IS RESEARCHING {(selected||"").toUpperCase()}...</div>
+          <div style={{ display:"flex", gap:5, justifyContent:"center", marginTop:10 }}>
+            {[0,1,2].map(i=><div key={i} style={{width:7,height:7,borderRadius:"50%",background:"#FF9933",animation:`bounce 1.2s ${i*0.2}s infinite`}}/>)}
+          </div>
+        </div>
+      )}
+
+      {info && !loading && (
+        <div style={{ borderRadius:16, overflow:"hidden",
+          background:darkMode?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.85)",
+          border:"1px solid rgba(255,153,51,0.3)", boxShadow:"0 8px 32px rgba(0,0,0,0.18)", animation:"slideUp 0.35s ease" }}>
+          <div style={{ height:3, background:"linear-gradient(90deg,#FF9933,#138808,#000080)" }}/>
+          <div style={{ padding:"18px 20px" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+              <div style={{ fontSize:15, fontWeight:"bold", color:"#FF9933" }}>🗺️ {selected}</div>
+              <span style={{ fontSize:9, color:T.dimText, letterSpacing:2, background:"rgba(255,153,51,0.1)", padding:"2px 8px", borderRadius:8, border:"1px solid rgba(255,153,51,0.2)" }}>✨ GEMINI AI</span>
+            </div>
+            <div style={{ fontSize:13, color:T.text, lineHeight:1.78 }}>{fmtText(info,"#FF9933")}</div>
+            <div style={{ marginTop:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <div style={{ fontSize:10, color:T.dimText, letterSpacing:1 }}>Verify at eci.gov.in • Data via Google Gemini</div>
+              <button onClick={()=>{setInfo("");setSelected("");}}
+                style={{ padding:"5px 12px", borderRadius:10, border:"1px solid rgba(255,153,51,0.3)",
+                  background:"rgba(255,153,51,0.07)", color:"#FF9933", fontSize:11, cursor:"pointer", fontFamily:"Georgia,serif" }}>
+                ← New State
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!info && !loading && !selected && (
+        <div style={{ textAlign:"center", padding:"32px 20px", borderRadius:16,
+          background:darkMode?"rgba(255,255,255,0.03)":"rgba(255,255,255,0.5)",
+          border:"1px solid rgba(255,153,51,0.12)" }}>
+          <div style={{ fontSize:44, marginBottom:12, animation:"float 4s ease-in-out infinite" }}>🗺️</div>
+          <div style={{ color:T.subText, fontSize:13, lineHeight:1.7 }}>
+            Select a state from the dropdown or tap a quick button above<br/>
+            to get AI-powered election information powered by <strong style={{color:"#4285F4"}}>Google Gemini</strong>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── QUIZ PANEL ───────────────────────────────────────────────────────────────
+function QuizPanel({ callGeminiDirect, T, darkMode }) {
+  const [difficulty, setDifficulty]     = useState("Medium");
+  const [topic, setTopic]               = useState("General");
+  const [questions, setQuestions]       = useState([]);
+  const [currentQ, setCurrentQ]         = useState(0);
+  const [selectedAns, setSelectedAns]   = useState(null);
+  const [showExpl, setShowExpl]         = useState(false);
+  const [score, setScore]               = useState(0);
+  const [answered, setAnswered]         = useState([]);
+  const [quizDone, setQuizDone]         = useState(false);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState("");
+
+  const TOPICS = ["General","EVM & Technology","Election Laws","Types of Elections","Voter Rights","Indian History of Elections"];
+  const DIFFS  = [{ d:"Easy", c:"#34A853" },{ d:"Medium", c:"#FBBC05" },{ d:"Hard", c:"#EA4335" }];
+
+  const generateQuiz = async () => {
+    setLoading(true); setError(""); setQuestions([]); setCurrentQ(0);
+    setSelectedAns(null); setShowExpl(false); setScore(0); setAnswered([]); setQuizDone(false);
+    const prompt = `Generate exactly 5 ${difficulty.toLowerCase()} multiple choice questions about Indian elections, topic: "${topic}". Return ONLY a raw JSON array. No markdown, no code fences, no extra text before or after. Use this exact format with SHORT explanations (max 12 words each): [{"q":"Question?","options":["A","B","C","D"],"correct":0,"explanation":"Short reason."}]`;
+    try {
+      const raw = await callGeminiDirect(prompt);
+      // Strip markdown fences if present
+      let clean = raw.replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();
+      // Extract just the JSON array (from first [ to last ])
+      const start = clean.indexOf("[");
+      const end   = clean.lastIndexOf("]");
+      if (start !== -1 && end !== -1 && end > start) {
+        clean = clean.slice(start, end + 1);
+      }
+      let qs;
+      try {
+        qs = JSON.parse(clean);
+      } catch(parseErr) {
+        // JSON is truncated — extract all complete objects manually
+        const objRegex = /\{[^{}]*"q"\s*:\s*"[^"]*"[^{}]*"options"\s*:\s*\[[^\]]*\][^{}]*"correct"\s*:\s*\d[^{}]*\}/g;
+        const matches = clean.match(objRegex) || [];
+        if (matches.length === 0) throw new Error("Could not parse quiz response. Please try again.");
+        qs = matches.map(m => { try { return JSON.parse(m); } catch(e2){ return null; } }).filter(Boolean);
+        if (qs.length === 0) throw new Error("Could not parse quiz response. Please try again.");
+      }
+      if (!Array.isArray(qs) || qs.length === 0) throw new Error("Invalid format received.");
+      setQuestions(qs);
+    } catch(e) {
+      setError("⚠️ Could not generate quiz. " + e.message + " Please try again!");
+    }
+    setLoading(false);
+  };
+
+  const handleAnswer = (idx) => {
+    if (selectedAns !== null) return;
+    setSelectedAns(idx);
+    setShowExpl(true);
+    const isCorrect = idx === questions[currentQ].correct;
+    if (isCorrect) setScore(s=>s+1);
+    setAnswered(prev=>[...prev,{selected:idx,correct:questions[currentQ].correct,isCorrect}]);
+  };
+
+  const nextQ = () => {
+    if (currentQ+1 >= questions.length) { setQuizDone(true); }
+    else { setCurrentQ(q=>q+1); setSelectedAns(null); setShowExpl(false); }
+  };
+
+  const scoreLabel = () => {
+    const p = score/questions.length;
+    if (p===1)  return ["🏆","Perfect Score! You're an election expert!","#FBBC05"];
+    if (p>=0.8) return ["⭐","Excellent! Great knowledge of Indian elections!","#34A853"];
+    if (p>=0.6) return ["👍","Good Job! Keep learning about democracy.","#4285F4"];
+    if (p>=0.4) return ["📚","Keep Learning! Democracy rewards the informed.","#FF9933"];
+    return ["💪","Practice More! Every vote starts with knowledge.","#EA4335"];
+  };
+
+  // Setup screen
+  if (questions.length===0 && !loading) return (
+    <div style={{ padding:"20px 16px 100px", maxWidth:700, margin:"0 auto", animation:"slideUp 0.3s ease" }}>
+      <div style={{ marginBottom:18 }}>
+        <div style={{ fontSize:18, fontWeight:"bold", color:"#4285F4", marginBottom:4, letterSpacing:1 }}>🧠 Election Knowledge Quiz</div>
+        <div style={{ fontSize:12, color:T.subText }}>Test your knowledge — 5 AI-generated questions per round</div>
+      </div>
+
+      {error && <div style={{ padding:"12px 16px", borderRadius:12, background:"rgba(234,67,53,0.1)", border:"1px solid rgba(234,67,53,0.3)", color:"#EA4335", fontSize:12, marginBottom:14 }}>{error}</div>}
+
+      <div style={{ marginBottom:16 }}>
+        <div style={{ fontSize:11, color:T.dimText, letterSpacing:1, marginBottom:8 }}>TOPIC</div>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+          {TOPICS.map(t => (
+            <button key={t} onClick={()=>setTopic(t)}
+              style={{ padding:"7px 13px", borderRadius:16, fontFamily:"Georgia,serif",
+                border:"1px solid "+(topic===t?"#4285F4":"rgba(255,255,255,0.15)"),
+                background:topic===t?"rgba(66,133,244,0.18)":"rgba(255,255,255,0.04)",
+                color:topic===t?"#4285F4":T.text, fontSize:11, cursor:"pointer", transition:"all 0.2s" }}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom:24 }}>
+        <div style={{ fontSize:11, color:T.dimText, letterSpacing:1, marginBottom:8 }}>DIFFICULTY</div>
+        <div style={{ display:"flex", gap:8 }}>
+          {DIFFS.map(({d,c}) => (
+            <button key={d} onClick={()=>setDifficulty(d)}
+              style={{ flex:1, padding:"11px", borderRadius:12, fontFamily:"Georgia,serif",
+                border:"2px solid "+(difficulty===d?c:"rgba(255,255,255,0.1)"),
+                background:difficulty===d?c+"22":"rgba(255,255,255,0.04)",
+                color:difficulty===d?c:T.subText, fontWeight:"bold", fontSize:13,
+                cursor:"pointer", transition:"all 0.2s" }}>{d}</button>
+          ))}
+        </div>
+      </div>
+
+      <button onClick={generateQuiz}
+        style={{ width:"100%", padding:"15px", borderRadius:14, border:"none",
+          background:"linear-gradient(135deg,#4285F4,#34A853)", color:"white",
+          fontSize:15, fontWeight:"bold", cursor:"pointer", fontFamily:"Georgia,serif", letterSpacing:1,
+          boxShadow:"0 8px 28px rgba(66,133,244,0.4)" }}>
+        🧠 Start Quiz — 5 Questions
+      </button>
+
+      <div style={{ marginTop:18, display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
+        {[["5 Qs","Per round"],["✨ AI","Generated"],["🇮🇳","All topics"]].map(([v,l],i)=>(
+          <div key={i} style={{ textAlign:"center", padding:"12px 8px", borderRadius:12,
+            background:darkMode?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.7)",
+            border:"1px solid rgba(66,133,244,0.15)" }}>
+            <div style={{ fontSize:18, fontWeight:"bold", color:"#4285F4", marginBottom:2 }}>{v}</div>
+            <div style={{ fontSize:10, color:T.subText, letterSpacing:1 }}>{l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (loading) return (
+    <div style={{ padding:"20px", textAlign:"center", maxWidth:700, margin:"0 auto", paddingTop:80 }}>
+      <div style={{ width:60, height:60, borderRadius:"50%", background:"linear-gradient(135deg,#4285F4,#34A853,#FBBC05)",
+        animation:"gemSpin 1s linear infinite", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:28, marginBottom:18 }}>🧠</div>
+      <div style={{ color:T.subText, fontSize:12, letterSpacing:2, marginBottom:12 }}>GEMINI IS CRAFTING YOUR QUIZ...</div>
+      <div style={{ display:"flex", gap:6, justifyContent:"center" }}>
+        {[0,1,2].map(i=><div key={i} style={{width:9,height:9,borderRadius:"50%",background:"#4285F4",animation:`bounce 1.2s ${i*0.2}s infinite`}}/>)}
+      </div>
+    </div>
+  );
+
+  if (quizDone) {
+    const [emoji,msg,col] = scoreLabel();
+    return (
+      <div style={{ padding:"20px 16px 100px", maxWidth:700, margin:"0 auto", animation:"slideUp 0.4s ease" }}>
+        <div style={{ textAlign:"center", padding:"28px 20px", borderRadius:20,
+          background:darkMode?"rgba(255,255,255,0.05)":"rgba(255,255,255,0.85)",
+          border:"1px solid rgba(66,133,244,0.3)", marginBottom:18, boxShadow:"0 8px 32px rgba(0,0,0,0.15)" }}>
+          <div style={{ fontSize:54, marginBottom:10 }}>{emoji}</div>
+          <div style={{ fontSize:30, fontWeight:"bold", color:col, marginBottom:4 }}>{score} / {questions.length}</div>
+          <div style={{ fontSize:15, color:T.text, marginBottom:4 }}>{msg}</div>
+          <div style={{ fontSize:11, color:T.dimText, letterSpacing:1 }}>Topic: {topic} • Difficulty: {difficulty}</div>
+        </div>
+        <div style={{ fontSize:13, color:T.text, fontWeight:"bold", marginBottom:12 }}>📋 Answer Review:</div>
+        {questions.map((q,i) => (
+          <div key={i} style={{ padding:"12px 16px", borderRadius:12, marginBottom:8,
+            background:answered[i]?.isCorrect?"rgba(52,168,83,0.08)":"rgba(234,67,53,0.08)",
+            border:"1px solid "+(answered[i]?.isCorrect?"rgba(52,168,83,0.3)":"rgba(234,67,53,0.3)") }}>
+            <div style={{ fontSize:12, fontWeight:"bold", color:answered[i]?.isCorrect?"#34A853":"#EA4335", marginBottom:3 }}>
+              {answered[i]?.isCorrect?"✅":"❌"} Q{i+1}: {q.q}
+            </div>
+            <div style={{ fontSize:11, color:T.subText }}>
+              Your answer: <span style={{color:answered[i]?.isCorrect?"#34A853":"#EA4335"}}>{q.options[answered[i]?.selected]}</span>
+              {!answered[i]?.isCorrect && <> • Correct: <span style={{color:"#34A853"}}>{q.options[q.correct]}</span></>}
+            </div>
+          </div>
+        ))}
+        <button onClick={()=>{setQuestions([]);setError("");}}
+          style={{ width:"100%", padding:"14px", borderRadius:14, border:"none",
+            background:"linear-gradient(135deg,#4285F4,#34A853)", color:"white", fontSize:14,
+            fontWeight:"bold", cursor:"pointer", fontFamily:"Georgia,serif", marginTop:6 }}>
+          🔄 Play Again
+        </button>
+      </div>
+    );
+  }
+
+  // Active question
+  const q = questions[currentQ];
+  return (
+    <div style={{ padding:"20px 16px 100px", maxWidth:700, margin:"0 auto" }}>
+      <div style={{ marginBottom:14 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+          <span style={{ fontSize:12, color:T.subText }}>Question {currentQ+1} of {questions.length}</span>
+          <span style={{ fontSize:12, color:"#34A853", fontWeight:"bold" }}>Score: {score}</span>
+        </div>
+        <div style={{ height:6, borderRadius:3, background:"rgba(255,255,255,0.1)", overflow:"hidden" }}>
+          <div style={{ height:"100%", width:(currentQ/questions.length*100)+"%",
+            background:"linear-gradient(90deg,#4285F4,#34A853)", borderRadius:3, transition:"width 0.4s ease" }}/>
+        </div>
+      </div>
+
+      <div style={{ padding:"20px", borderRadius:16, marginBottom:14,
+        background:darkMode?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.88)",
+        border:"1px solid rgba(66,133,244,0.25)", boxShadow:"0 4px 20px rgba(0,0,0,0.13)" }}>
+        <div style={{ fontSize:10, color:"#4285F4", letterSpacing:2, marginBottom:8 }}>✨ {topic.toUpperCase()} • {difficulty.toUpperCase()}</div>
+        <div style={{ fontSize:15, fontWeight:"bold", color:T.text, lineHeight:1.65 }}>{q.q}</div>
+      </div>
+
+      <div style={{ display:"flex", flexDirection:"column", gap:9, marginBottom:14 }}>
+        {q.options.map((opt,i) => {
+          let bg = darkMode?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.7)";
+          let border = "1px solid rgba(255,255,255,0.1)";
+          let col = T.text;
+          let anim = "none";
+          if (selectedAns!==null) {
+            if (i===q.correct)                  { bg="rgba(52,168,83,0.15)"; border="2px solid #34A853"; col="#34A853"; if(i===q.correct)anim="correctFlash 0.6s ease"; }
+            else if (i===selectedAns)           { bg="rgba(234,67,53,0.15)"; border="2px solid #EA4335"; col="#EA4335"; anim="wrongShake 0.4s ease"; }
+          }
+          return (
+            <button key={i} className="option-btn" onClick={()=>handleAnswer(i)}
+              disabled={selectedAns!==null}
+              style={{ padding:"13px 16px", borderRadius:12, border, background:bg, color:col,
+                fontSize:13, fontFamily:"Georgia,serif", textAlign:"left",
+                cursor:selectedAns===null?"pointer":"default",
+                display:"flex", alignItems:"center", gap:10, animation:anim }}>
+              <span style={{ width:26, height:26, borderRadius:"50%", background:"rgba(66,133,244,0.12)",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:11, fontWeight:"bold", flexShrink:0 }}>
+                {["A","B","C","D"][i]}
+              </span>
+              <span style={{ flex:1 }}>{opt}</span>
+              {selectedAns!==null && i===q.correct && <span>✅</span>}
+              {selectedAns===i && i!==q.correct && <span>❌</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {showExpl && (
+        <div style={{ animation:"slideUp 0.3s ease" }}>
+          <div style={{ padding:"14px 16px", borderRadius:12, marginBottom:12,
+            background:darkMode?"rgba(66,133,244,0.1)":"rgba(66,133,244,0.07)",
+            border:"1px solid rgba(66,133,244,0.25)" }}>
+            <div style={{ fontSize:10, color:"#4285F4", letterSpacing:1, marginBottom:4 }}>💡 EXPLANATION</div>
+            <div style={{ fontSize:13, color:T.text, lineHeight:1.65 }}>{q.explanation}</div>
+          </div>
+          <button onClick={nextQ}
+            style={{ width:"100%", padding:"13px", borderRadius:12, border:"none",
+              background:"linear-gradient(135deg,#4285F4,#34A853)", color:"white",
+              fontSize:14, fontWeight:"bold", cursor:"pointer", fontFamily:"Georgia,serif" }}>
+            {currentQ+1>=questions.length?"🏆 See Results":"Next Question →"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── FINDER PANEL ────────────────────────────────────────────────────────────
+function FinderPanel({ callGeminiDirect, T, darkMode }) {
+  const [pincode, setPincode] = useState("");
+  const [area, setArea]       = useState("");
+  const [result, setResult]   = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const findConst = async () => {
+    if (!pincode && !area) return;
+    setLoading(true); setResult("");
+    const query = `${pincode ? "Pincode: "+pincode : ""} ${area ? "Area/District/City: "+area : ""}`.trim();
+    try {
+      const r = await callGeminiDirect(
+        `You are an Indian electoral geography expert. A voter has provided: ${query}. Based on this information: 1) Identify the state and district 2) Name the likely **Lok Sabha constituency** 3) Name the likely **Vidhan Sabha constituency** 4) Mention the Returning Officer's office location if known 5) How to verify at electoralsearch.in with exact steps 6) Voter Helpline: 1950. Be helpful, use **bold** for constituency names, and honest if pincode data is approximate.`
+      );
+      setResult(r);
+    } catch(e) {
+      setResult("⚠️ Error: " + e.message);
+    }
+    setLoading(false);
+  };
+
+  const canSearch = (pincode.length===6 || area.trim().length>2) && !loading;
+
+  return (
+    <div style={{ padding:"20px 16px 100px", maxWidth:700, margin:"0 auto", animation:"slideUp 0.3s ease" }}>
+      <div style={{ marginBottom:18 }}>
+        <div style={{ fontSize:18, fontWeight:"bold", color:"#34A853", marginBottom:4, letterSpacing:1 }}>📍 Constituency Finder</div>
+        <div style={{ fontSize:12, color:T.subText }}>Find your Lok Sabha & Vidhan Sabha constituency by pincode or area</div>
+      </div>
+
+      <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
+        <input value={pincode}
+          onChange={e=>setPincode(e.target.value.replace(/\D/g,"").slice(0,6))}
+          placeholder="📮 Enter 6-digit Pincode (e.g. 110001)"
+          maxLength={6}
+          style={{ padding:"13px 16px", borderRadius:12,
+            background:darkMode?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.92)",
+            border:"1px solid rgba(52,168,83,0.4)", color:T.text, fontSize:13, fontFamily:"Georgia,serif" }}/>
+        <div style={{ textAlign:"center", fontSize:11, color:T.dimText }}>— or —</div>
+        <input value={area}
+          onChange={e=>setArea(e.target.value)}
+          placeholder="🏙️ Enter District / Area / City (e.g. Lucknow, Bandra East)"
+          style={{ padding:"13px 16px", borderRadius:12,
+            background:darkMode?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.92)",
+            border:"1px solid rgba(52,168,83,0.4)", color:T.text, fontSize:13, fontFamily:"Georgia,serif" }}/>
+        <button onClick={findConst} disabled={!canSearch}
+          style={{ padding:"14px", borderRadius:12, border:"none",
+            background:canSearch?"linear-gradient(135deg,#34A853,#0d8010)":"rgba(255,255,255,0.08)",
+            color:"white", fontWeight:"bold", fontSize:14, cursor:canSearch?"pointer":"default",
+            fontFamily:"Georgia,serif", boxShadow:canSearch?"0 4px 18px rgba(52,168,83,0.38)":"none" }}>
+          {loading?"⏳ Searching...":"📍 Find My Constituency"}
+        </button>
+      </div>
+
+      {loading && (
+        <div style={{ textAlign:"center", padding:"40px 0" }}>
+          <div style={{ width:48, height:48, borderRadius:"50%", background:"linear-gradient(135deg,#34A853,#138808)",
+            animation:"gemSpin 1s linear infinite", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:22, marginBottom:12 }}>📍</div>
+          <div style={{ color:T.subText, fontSize:12, letterSpacing:2 }}>LOCATING YOUR CONSTITUENCY...</div>
+        </div>
+      )}
+
+      {result && !loading && (
+        <div style={{ borderRadius:16, overflow:"hidden",
+          background:darkMode?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.88)",
+          border:"1px solid rgba(52,168,83,0.3)", boxShadow:"0 8px 28px rgba(0,0,0,0.14)", animation:"slideUp 0.35s ease" }}>
+          <div style={{ height:3, background:"linear-gradient(90deg,#34A853,#138808,#34A853)" }}/>
+          <div style={{ padding:"18px 20px" }}>
+            <div style={{ fontSize:10, color:"#34A853", letterSpacing:2, marginBottom:10 }}>📍 CONSTITUENCY RESULT • ✨ GEMINI AI</div>
+            <div style={{ fontSize:13, color:T.text, lineHeight:1.78 }}>{fmtText(result,"#34A853")}</div>
+            <div style={{ marginTop:14, padding:"12px 14px", borderRadius:11,
+              background:"rgba(52,168,83,0.08)", border:"1px solid rgba(52,168,83,0.2)" }}>
+              <div style={{ fontSize:11, color:"#34A853", fontWeight:"bold", letterSpacing:1, marginBottom:5 }}>🔍 VERIFY OFFICIALLY</div>
+              <div style={{ fontSize:12, color:T.subText, lineHeight:1.65 }}>
+                • Website: <span style={{color:"#34A853"}}>electoralsearch.in</span><br/>
+                • Helpline: <strong style={{color:"#34A853"}}>1950</strong> (24×7, 22 languages)<br/>
+                • App: 'Voter Helpline' on Play Store / App Store
+              </div>
+            </div>
+            <button onClick={()=>{setResult("");setPincode("");setArea("");}}
+              style={{ marginTop:12, padding:"7px 16px", borderRadius:10,
+                border:"1px solid rgba(52,168,83,0.4)", background:"rgba(52,168,83,0.08)",
+                color:"#34A853", fontSize:11, cursor:"pointer", fontFamily:"Georgia,serif" }}>
+              ← New Search
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!result && !loading && (
+        <div style={{ padding:"18px", borderRadius:14,
+          background:darkMode?"rgba(255,255,255,0.03)":"rgba(255,255,255,0.55)",
+          border:"1px solid rgba(52,168,83,0.12)" }}>
+          <div style={{ fontSize:11, color:T.subText, fontWeight:"bold", letterSpacing:1, marginBottom:10 }}>💡 DID YOU KNOW?</div>
+          <div style={{ fontSize:12, color:T.subText, lineHeight:1.75 }}>
+            🏛️ India has <strong style={{color:"#34A853"}}>543 Lok Sabha</strong> constituencies<br/>
+            🗳️ And <strong style={{color:"#FF9933"}}>4,120+ Vidhan Sabha</strong> seats across all states<br/>
+            📍 Each pincode typically maps to one Vidhan Sabha segment<br/>
+            ✅ Always verify at <strong style={{color:"#34A853"}}>electoralsearch.in</strong> officially
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── CALENDAR PANEL ───────────────────────────────────────────────────────────
+function CalendarPanel({ T, darkMode }) {
+  const years = [...new Set(UPCOMING_ELECTIONS.map(e=>e.year))];
+  const statusInfo = {
+    imminent:{ label:"🔴 Imminent (2026)", col:"#EA4335" },
+    upcoming:{ label:"🟠 Upcoming (2027)", col:"#FF9933" },
+    future:  { label:"🟢 Future (2028)",   col:"#34A853" },
+  };
+
+  const totalSeats = UPCOMING_ELECTIONS.reduce((s,e)=>s+e.seats,0);
+
+  return (
+    <div style={{ padding:"20px 16px 100px", maxWidth:700, margin:"0 auto", animation:"slideUp 0.3s ease" }}>
+      <div style={{ marginBottom:16 }}>
+        <div style={{ fontSize:18, fontWeight:"bold", color:"#FBBC05", marginBottom:4, letterSpacing:1 }}>📅 Election Calendar 2026–2028</div>
+        <div style={{ fontSize:12, color:T.subText }}>Upcoming Vidhan Sabha & Assembly elections across India</div>
+      </div>
+
+      {/* Summary stats */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:18 }}>
+        {[
+          [`${UPCOMING_ELECTIONS.length}`, "Elections Ahead", "#FBBC05"],
+          [`${totalSeats.toLocaleString()}`, "Assembly Seats", "#FF9933"],
+          ["3", "Years Covered", "#34A853"],
+        ].map(([v,l,c],i)=>(
+          <div key={i} style={{ textAlign:"center", padding:"12px 8px", borderRadius:12,
+            background:darkMode?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.75)",
+            border:`1px solid ${c}33` }}>
+            <div style={{ fontSize:20, fontWeight:"bold", color:c }}>{v}</div>
+            <div style={{ fontSize:10, color:T.subText, marginTop:2, letterSpacing:1 }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div style={{ display:"flex", gap:14, marginBottom:18, flexWrap:"wrap" }}>
+        {Object.entries(statusInfo).map(([k,v])=>(
+          <div key={k} style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, color:T.subText }}>
+            <div style={{ width:8, height:8, borderRadius:"50%", background:v.col, boxShadow:`0 0 6px ${v.col}88` }}/>
+            {v.label}
+          </div>
+        ))}
+      </div>
+
+      {/* Timeline by year */}
+      {years.map(year => (
+        <div key={year} style={{ marginBottom:22 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
+            <div style={{ fontSize:20, fontWeight:"bold", color:"#FBBC05" }}>{year}</div>
+            <div style={{ flex:1, height:1, background:"linear-gradient(90deg,rgba(251,188,5,0.45),transparent)" }}/>
+            <div style={{ fontSize:10, color:T.dimText }}>
+              {UPCOMING_ELECTIONS.filter(e=>e.year===year).length} elections •{" "}
+              {UPCOMING_ELECTIONS.filter(e=>e.year===year).reduce((s,e)=>s+e.seats,0).toLocaleString()} seats
+            </div>
+          </div>
+
+          <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+            {UPCOMING_ELECTIONS.filter(e=>e.year===year).map((el,i)=>(
+              <div key={i} className="calendar-item"
+                style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 16px",
+                  borderRadius:12, background:darkMode?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.8)",
+                  border:`1px solid ${el.color}44`, borderLeft:`3px solid ${el.color}` }}>
+                <div style={{ width:9, height:9, borderRadius:"50%", background:el.color, flexShrink:0,
+                  boxShadow:`0 0 8px ${el.color}99`, animation:el.status==="imminent"?"pulse 2s infinite":"none" }}/>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:"bold", color:T.text }}>{el.state}</div>
+                  <div style={{ fontSize:11, color:T.subText }}>{el.type} • {el.seats} seats</div>
+                </div>
+                <div style={{ textAlign:"right", flexShrink:0 }}>
+                  <div style={{ fontSize:12, color:el.color, fontWeight:"bold" }}>{el.date}</div>
+                  <div style={{ fontSize:9, color:T.dimText, letterSpacing:1, marginTop:2 }}>{statusInfo[el.status]?.label.split(" ")[0]}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div style={{ padding:"12px 16px", borderRadius:12,
+        background:"rgba(251,188,5,0.07)", border:"1px solid rgba(251,188,5,0.22)",
+        fontSize:11, color:T.subText, lineHeight:1.6 }}>
+        📌 Dates are estimates based on 5-year election cycles from last elections. Exact dates announced by ECI.
+        Check <span style={{color:"#FBBC05", fontWeight:"bold"}}>eci.gov.in</span> or call <strong>1950</strong> for official schedules.
+      </div>
+    </div>
+  );
+}
+
+// ─── CHECKLIST PANEL ─────────────────────────────────────────────────────────
+function ChecklistPanel({ T, darkMode }) {
+  const [checked, setChecked] = useState({});
+  const toggle = (id) => setChecked(p=>({...p,[id]:!p[id]}));
+  const doneCount = Object.values(checked).filter(Boolean).length;
+  const pct = Math.round(doneCount/VOTER_ID_STEPS.length*100);
+
+  const milestone = () => {
+    if (pct===100) return {text:"🎉 Congratulations! You are now a registered voter of India. Exercise your right!",col:"#34A853"};
+    if (pct>=70)  return {text:"🚀 Almost there! Just a few more steps to complete registration.",col:"#FBBC05"};
+    if (pct>=40)  return {text:"👍 Great progress! Keep going — your vote matters.",col:"#4285F4"};
+    if (pct>0)    return {text:"✊ You've started! Voter registration is your democratic right.",col:"#FF9933"};
+    return          {text:"☝ Tap each step as you complete your voter registration journey.",col:T.subText};
+  };
+  const ms = milestone();
+
+  return (
+    <div style={{ padding:"20px 16px 100px", maxWidth:700, margin:"0 auto", animation:"slideUp 0.3s ease" }}>
+      <div style={{ marginBottom:16 }}>
+        <div style={{ fontSize:18, fontWeight:"bold", color:"#34A853", marginBottom:4, letterSpacing:1 }}>✅ Voter ID Registration Checklist</div>
+        <div style={{ fontSize:12, color:T.subText }}>Interactive step-by-step guide to get your EPIC (Voter ID) card</div>
+      </div>
+
+      {/* Progress */}
+      <div style={{ padding:"16px", borderRadius:14, marginBottom:18,
+        background:darkMode?"rgba(52,168,83,0.08)":"rgba(52,168,83,0.06)",
+        border:"1px solid rgba(52,168,83,0.22)" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
+          <span style={{ fontSize:12, color:T.subText }}>{doneCount} of {VOTER_ID_STEPS.length} steps completed</span>
+          <span style={{ fontSize:15, fontWeight:"bold", color:ms.col }}>{pct}%</span>
+        </div>
+        <div style={{ height:8, borderRadius:4, background:"rgba(255,255,255,0.1)", overflow:"hidden", marginBottom:8 }}>
+          <div style={{ height:"100%", width:pct+"%",
+            background:pct===100?"linear-gradient(90deg,#34A853,#138808)":"linear-gradient(90deg,#4285F4,#34A853)",
+            borderRadius:4, transition:"width 0.5s ease" }}/>
+        </div>
+        <div style={{ fontSize:12, color:ms.col, fontStyle:"italic", lineHeight:1.5 }}>{ms.text}</div>
+      </div>
+
+      {/* Steps */}
+      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+        {VOTER_ID_STEPS.map(step => {
+          const done = !!checked[step.id];
+          return (
+            <div key={step.id} className="check-item" onClick={()=>toggle(step.id)}
+              style={{ display:"flex", alignItems:"flex-start", gap:14, padding:"14px 16px", borderRadius:12,
+                background:done?(darkMode?"rgba(52,168,83,0.11)":"rgba(52,168,83,0.09)") :(darkMode?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.8)"),
+                border:"1px solid "+(done?"rgba(52,168,83,0.38)":"rgba(255,255,255,0.1)"), opacity:done?0.88:1 }}>
+              {/* Checkbox */}
+              <div style={{ width:24, height:24, borderRadius:6, flexShrink:0, marginTop:2,
+                border:"2px solid "+(done?"#34A853":"rgba(255,255,255,0.3)"),
+                background:done?"#34A853":"transparent",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:13, color:"white", fontWeight:"bold", transition:"all 0.25s" }}>
+                {done?"✓":""}
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:3 }}>
+                  <span style={{ fontSize:16 }}>{step.icon}</span>
+                  <span style={{ fontSize:13, fontWeight:"bold",
+                    color:done?"#34A853":T.text,
+                    textDecoration:done?"line-through":"none", transition:"all 0.25s" }}>
+                    Step {step.id}: {step.title}
+                  </span>
+                </div>
+                <div style={{ fontSize:12, color:T.subText, lineHeight:1.55 }}>{step.desc}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Actions */}
+      <div style={{ display:"flex", gap:10, marginTop:16 }}>
+        <button onClick={()=>setChecked({})}
+          style={{ flex:1, padding:"11px", borderRadius:12,
+            border:"1px solid rgba(255,255,255,0.15)", background:"rgba(255,255,255,0.05)",
+            color:T.subText, fontSize:12, cursor:"pointer", fontFamily:"Georgia,serif" }}>
+          🔄 Reset
+        </button>
+        <a href="https://voters.eci.gov.in" target="_blank" rel="noreferrer"
+          style={{ flex:2.5, padding:"11px", borderRadius:12, border:"none",
+            background:"linear-gradient(135deg,#34A853,#138808)", color:"white", fontSize:12,
+            fontWeight:"bold", textDecoration:"none", textAlign:"center",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:5 }}>
+          🌐 Open voters.eci.gov.in
+        </a>
+      </div>
+
+      <div style={{ marginTop:12, padding:"10px 14px", borderRadius:10,
+        background:"rgba(52,168,83,0.07)", border:"1px solid rgba(52,168,83,0.18)",
+        fontSize:11, color:T.subText, lineHeight:1.6 }}>
+        📞 Voter Helpline: <strong style={{color:"#34A853"}}>1950</strong> (24×7, 22 languages) &nbsp;•&nbsp;
+        🌐 voters.eci.gov.in &nbsp;•&nbsp; 📱 Voter Helpline App
+      </div>
+    </div>
+  );
+}
+
+// ─── FABS CONFIG ─────────────────────────────────────────────────────────────
+const FABS = [
+  { id:"deepfake", icon:"🎭", label:"Deepfake Awareness",       color:"#EA4335",
+    prompt:"You are an AI deepfake & misinformation expert. Explain in detail how to identify Election Deepfakes and misinformation in India. Cover: (1) What are election deepfakes, (2) Warning signs of manipulated audio/video, (3) How to verify before sharing, (4) Tools to detect deepfakes, (5) Key Indian fact-checking sites, (6) ECI and government guidelines. Use numbered steps, bold key terms, and emojis." },
+  { id:"booth",    icon:"🏛️", label:"Booth Infrastructure Guide", color:"#34A853",
+    prompt:"You are an ECI polling booth expert. Generate a comprehensive checklist of what a Standard Polling Booth should have per ECI guidelines. Include: (1) Physical Infrastructure, (2) Lighting & Ventilation, (3) Drinking Water & Sanitation, (4) EVM & VVPAT Setup, (5) Security, (6) Staff required, (7) Queue Management, (8) PwD & Senior Citizen Facilities, (9) Medical/First Aid. Format as ✅ checklist with bold section headers." },
+  { id:"access",   icon:"♿", label:"Accessibility Scanner",      color:"#FBBC05", prompt:"" },
+];
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+function ElectionAssistant() {
+  const [messages, setMessages]       = useState([{
+    role:"assistant",
+    content:"🙏 **Jai Hind!** I'm **Matdata Mitra** — your personal Indian Election Guide, powered by **Google Gemini AI**!\n\nI can help you understand:\n- 🗳️ How to vote & register\n- 📅 Election timelines & process\n- 🏛️ Types of elections\n- ⚙️ EVMs, counting & results\n- 📜 Rules, laws & your rights\n\nWhat would you like to know about India's elections? 🇮🇳"
+  }]);
+  const [input, setInput]             = useState("");
+  const [loading, setLoading]         = useState(false);
+  const [apiKey, setApiKey]           = useState("");
+  const [keySubmitted, setKeySubmitted]= useState(false);
+  const [verifying, setVerifying]      = useState(false);
+  const [verifyError, setVerifyError]  = useState("");
+  const [particles, setParticles]     = useState([]);
+  const [apiCallsUsed, setApiCallsUsed]= useState(0);
+  const [cooldown, setCooldown]       = useState(0);
+  const [offlineMode, setOfflineMode] = useState(false);
+  const [barOpen, setBarOpen]         = useState(true);
+  const [darkMode, setDarkMode]       = useState(true);
+  const [activeModule, setActiveModule]= useState(null);
+  const [moduleLoading, setModuleLoading]= useState(false);
+  const [moduleResult, setModuleResult]= useState("");
+  const [accessInput, setAccessInput] = useState("");
+  const [activeTab, setActiveTab]     = useState("chat");
+  const [lang, setLang]               = useState("en");
+  const [listening, setListening]     = useState(false);
+  const [copiedIdx, setCopiedIdx]     = useState(null);
+  const messagesEndRef                = useRef(null);
+  const cooldownRef                   = useRef(null);
+  const recognitionRef                = useRef(null);
+
+  useEffect(() => {
+    const pts = Array.from({length:22},(_,i)=>({
+      id:i, x:Math.random()*100, y:Math.random()*100,
+      size:Math.random()*3+1,
+      color:["#FF9933","#138808","#FFFFFF","#000080","#4285F4"][Math.floor(Math.random()*5)],
+      duration:Math.random()*8+4, delay:Math.random()*4,
+    }));
+    setParticles(pts);
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current && messagesEndRef.current.scrollIntoView({behavior:"smooth"});
+  }, [messages, loading]);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      cooldownRef.current = setInterval(()=>{
+        setCooldown(prev => {
+          if (prev<=1){ clearInterval(cooldownRef.current); setOfflineMode(false); return 0; }
+          return prev-1;
+        });
+      }, 1000);
+    }
+    return ()=>clearInterval(cooldownRef.current);
+  }, [cooldown>0 && offlineMode]);
+
+  // ── Gemini chat call ──
+  const callGemini = async (newMessages, userText) => {
+    const history = newMessages.slice(1,-1).slice(-6).map(m=>({
+      role:m.role==="assistant"?"model":"user",
+      parts:[{text:m.content}]
+    }));
+    const body = {
+      system_instruction:{parts:[{text:SYSTEM_PROMPT}]},
+      contents:[...history,{role:"user",parts:[{text:userText}]}],
+      generationConfig:{temperature:0.7,maxOutputTokens:2048}
+    };
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key="+apiKey,
+      {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}
+    );
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message||"Gemini API error");
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!reply) throw new Error("Empty response from Gemini");
+    return reply;
+  };
+
+  // ── Gemini direct call (for feature panels) ──
+  const callGeminiDirect = async (prompt) => {
+    const body = {
+      contents:[{role:"user",parts:[{text:prompt}]}],
+      generationConfig:{temperature:0.7,maxOutputTokens:2048}
+    };
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key="+apiKey,
+      {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}
+    );
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message||"Gemini API error");
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Empty response");
+    return text;
+  };
+
+  const sendMessage = async (text) => {
+    const userText = text||input.trim();
+    if (!userText||loading) return;
+    setInput("");
+    const newMessages = [...messages,{role:"user",content:userText}];
+    setMessages(newMessages);
+    setLoading(true);
+
+    if (offlineMode || apiCallsUsed>=DAILY_LIMIT) {
+      setTimeout(()=>{
+        const ans = findOfflineAnswer(userText);
+        setMessages(prev=>[...prev,{role:"assistant",content:"📚 *(Offline Knowledge Base"+(cooldown>0?" — API back in "+cooldown+"s":" — Daily limit reached")+")*\n\n"+ans}]);
+        setLoading(false);
+      },600);
+      return;
+    }
+
+    try {
+      try {
+        const reply = await callGemini(newMessages, userText);
+        setApiCallsUsed(p=>p+1);
+        setMessages(prev=>[...prev,{role:"assistant",content:reply}]);
+      } catch(geminiErr) {
+        // Gemini failed → offline Q&A fallback
+        setOfflineMode(true); setCooldown(COOLDOWN_SECONDS);
+        const ans = findOfflineAnswer(userText);
+        setMessages(prev=>[...prev,{role:"assistant",content:"📚 *(Gemini offline — built-in Knowledge Base. Retrying in "+COOLDOWN_SECONDS+"s)*\n\n"+ans}]);
+      }
+    } catch(e) {
+      setMessages(prev=>[...prev,{role:"assistant",content:"⚠️ Unexpected error: "+e.message}]);
+    }
+    setLoading(false);
+  };
+
+  const handleKey = (e) => {
+    if (e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendMessage(); }
+  };
+
+  const formatMessage = (text) =>
+    text.split("\n").map((line,i) => {
+      const f = line
+        .replace(/\*\*(.*?)\*\*/g,'<strong style="color:#FF9933">$1</strong>')
+        .replace(/^(\d+\.)\s/,'<span style="color:#34A853;font-weight:700">$1</span> ')
+        .replace(/^[-•]\s/,'<span style="color:#FF9933">▸</span> ');
+      return React.createElement("div",{key:i,style:{marginBottom:line?"4px":"8px"},dangerouslySetInnerHTML:{__html:f||"&nbsp;"}});
+    });
+
+  const callGeminiModule = async (prompt) => {
+    const body = {
+      contents:[{role:"user",parts:[{text:prompt}]}],
+      generationConfig:{temperature:0.7,maxOutputTokens:2048}
+    };
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key="+apiKey,
+      {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}
+    );
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Empty response");
+    return text;
+  };
+
+  const openModule = async (fab) => {
+    setActiveModule(fab.id); setModuleResult(""); setAccessInput("");
+    if (fab.id!=="access") {
+      setModuleLoading(true);
+      try { setModuleResult(await callGeminiModule(fab.prompt)); }
+      catch(e) { setModuleResult("⚠️ Error: "+e.message); }
+      setModuleLoading(false);
+    }
+  };
+
+  const runAccessScan = async () => {
+    if (!accessInput.trim()) return;
+    setModuleLoading(true); setModuleResult("");
+    const prompt = `You are an ECI Accessibility Expert. A voter has the condition: "${accessInput}". Generate a personalised 'Ease of Access' report per ECI guidelines. Include: (1) Facilities at polling booths for their condition, (2) Legal rights under ECI PwD guidelines, (3) How to request assistance (Companion, Form 14A), (4) Postal ballot eligibility, (5) How to pre-register for accessibility help, (6) Contact numbers. Use bold headers, emojis, numbered points. Be warm.`;
+    try { setModuleResult(await callGeminiModule(prompt)); }
+    catch(e) { setModuleResult("⚠️ Error: "+e.message); }
+    setModuleLoading(false);
+  };
+
+  const renderModuleResult = (text) => text.split("\n").map((line,i)=>{
+    const f = line
+      .replace(/\*\*(.*?)\*\*/g,'<strong style="color:#4285F4">$1</strong>')
+      .replace(/^(\d+\.)\s/,'<span style="color:#34A853;font-weight:700">$1</span> ')
+      .replace(/^[-•✅⚠️]\s?/,m=>`<span style="color:#FBBC05">${m}</span>`);
+    return React.createElement("div",{key:i,style:{marginBottom:line?"3px":"7px"},dangerouslySetInnerHTML:{__html:f||"&nbsp;"}});
+  });
+
+  // ── Voice Input ──────────────────────────────────────────────────────────
+  const startListening = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert("Voice input not supported in this browser. Please use Chrome."); return; }
+    if (listening) { recognitionRef.current && recognitionRef.current.stop(); setListening(false); return; }
+    const recog = new SR();
+    recog.lang = lang === "hi" ? "hi-IN" : "en-IN";
+    recog.interimResults = false;
+    recog.onstart  = () => setListening(true);
+    recog.onresult = (e) => { setInput(e.results[0][0].transcript); setListening(false); };
+    recog.onerror  = () => setListening(false);
+    recog.onend    = () => setListening(false);
+    recog.start();
+    recognitionRef.current = recog;
+  };
+
+  // ── Share via WhatsApp ────────────────────────────────────────────────────
+  const shareMsg = (text) => {
+    const clean = text.replace(/\*\*(.*?)\*\*/g,"*$1*").substring(0, 600);
+    const wa = encodeURIComponent("🗳️ *Matdata Mitra — India Election Guide*\n\n" + clean + "\n\n_Ask your election questions at Matdata Mitra AI_");
+    window.open("https://wa.me/?text=" + wa, "_blank");
+  };
+
+  // ── Copy message ──────────────────────────────────────────────────────────
+  const copyMsg = (text, idx) => {
+    if (navigator.clipboard) navigator.clipboard.writeText(text.replace(/\*\*/g,""));
+    setCopiedIdx(idx);
+    setTimeout(() => setCopiedIdx(null), 1800);
+  };
+
+  // ── Language strings ──────────────────────────────────────────────────────
+  const L = lang === "hi" ? {
+    placeholder:"चुनाव, मतदान, ईवीएम के बारे में पूछें...",
+    footer:"Google Gemini AI द्वारा संचालित • चुनाव आयोग डेटा • Enter दबाएं",
+  } : {
+    placeholder:"Ask about elections, voting, EVM, timelines...",
+    footer:"Powered by Google Gemini AI • Election Commission of India • Press Enter to send",
+  };
+
+  // ─── API KEY LOGIN SCREEN ────────────────────────────────────────────────
+  // ── API Key Verification ─────────────────────────────────────────────────
+  const verifyKey = async () => {
+    if (!apiKey.trim()) return;
+    setVerifying(true);
+    setVerifyError("");
+    try {
+      const res = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key="+apiKey.trim(),
+        {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({
+            contents:[{role:"user",parts:[{text:"hi"}]}],
+            generationConfig:{maxOutputTokens:5}
+          })
+        }
+      );
+      const data = await res.json();
+      if (data.error) {
+        const msg = data.error.message||"Invalid API key";
+        if (msg.toLowerCase().includes("api key")) setVerifyError("❌ Invalid API key. Please check and try again.");
+        else if (msg.toLowerCase().includes("quota")) setVerifyError("⚠️ Quota exceeded on this key. Try a different key.");
+        else setVerifyError("❌ "+msg);
+        setVerifying(false);
+        return;
+      }
+      // Success — key works
+      setVerifyError("");
+      setKeySubmitted(true);
+    } catch(e) {
+      setVerifyError("❌ Network error. Please check your internet connection.");
+    }
+    setVerifying(false);
+  };
+
+  if (!keySubmitted) {
+    return (
+      <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center",
+        background:"linear-gradient(135deg,#0a0a1a 0%,#060d18 35%,#0d1a06 65%,#0a0a1a 100%)",
+        fontFamily:"Georgia,serif", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"fixed",inset:0,zIndex:0,opacity:0.20,pointerEvents:"none" }}
+          dangerouslySetInnerHTML={{__html:ELECTION_BG_SVG}}/>
+        <div style={{ position:"fixed",top:0,left:0,right:0,height:5,zIndex:20,
+          background:"linear-gradient(90deg,#FF9933 33%,#FFFFFF 33% 66%,#138808 66%)" }}/>
+        {particles.map(p=>(
+          <div key={p.id} style={{ position:"fixed",left:p.x+"%",top:p.y+"%",
+            width:p.size+"px",height:p.size+"px",borderRadius:"50%",
+            background:p.color,opacity:0.4,pointerEvents:"none",zIndex:1,
+            animation:`float ${p.duration}s ${p.delay}s ease-in-out infinite` }}/>
+        ))}
+        <div style={{ position:"relative",zIndex:10,width:"100%",maxWidth:440,
+          padding:"38px 30px",margin:"20px",
+          background:"rgba(255,255,255,0.04)",backdropFilter:"blur(22px)",
+          border:"1px solid rgba(66,133,244,0.3)",borderRadius:24,
+          boxShadow:"0 20px 60px rgba(0,0,0,0.55),0 0 40px rgba(66,133,244,0.07)",
+          animation:"fadeIn 0.6s ease forwards" }}>
+          <div style={{ height:3,background:"linear-gradient(90deg,#FF9933 33%,#fff 33% 66%,#138808 66%)",
+            borderRadius:"2px 2px 0 0",position:"absolute",top:0,left:0,right:0 }}/>
+          {/* Logo */}
+          <div style={{ textAlign:"center",marginBottom:26 }}>
+            <div style={{ width:72,height:72,borderRadius:"50%",margin:"0 auto 14px",
+              background:"linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:34,boxShadow:"0 0 28px rgba(66,133,244,0.45)",
+              animation:"rotateSlow 10s linear infinite" }}>🗳️</div>
+            <div style={{ fontSize:26,fontWeight:"bold",
+              background:"linear-gradient(90deg,#FF9933,#FFFFFF,#138808)",
+              backgroundSize:"200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
+              animation:"shimmer 3s linear infinite",marginBottom:4 }}>Matdata Mitra</div>
+            <div style={{ fontSize:13,color:"rgba(255,255,255,0.4)",letterSpacing:1,marginBottom:8 }}>मतदाता मित्र</div>
+            <div style={{ display:"inline-flex",alignItems:"center",gap:6,
+              background:"rgba(66,133,244,0.12)",border:"1px solid rgba(66,133,244,0.3)",
+              borderRadius:12,padding:"3px 12px" }}>
+              <div style={{ width:14,height:14,borderRadius:"50%",
+                background:"linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335)",
+                animation:"gemSpin 4s linear infinite" }}/>
+              <span style={{ fontSize:10,color:"#4285F4",letterSpacing:1 }}>Powered by Google Gemini AI</span>
+            </div>
+          </div>
+          {/* Description */}
+          <div style={{ marginBottom:14,color:"rgba(255,255,255,0.55)",fontSize:12,lineHeight:1.7,textAlign:"center" }}>
+            Enter your <strong style={{color:"#4285F4"}}>Gemini API Key</strong> to unlock your AI-powered India Election Guide
+          </div>
+          {/* Features preview */}
+          <div style={{ display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center",marginBottom:18 }}>
+            {["🗳️ Voter Guide","⚙️ EVM Info","📅 Calendar","🧠 Quiz","🗺️ State Info","🎭 Deepfake Check"].map((f,i)=>(
+              <span key={i} style={{ fontSize:9,color:"rgba(255,255,255,0.35)",
+                background:"rgba(255,255,255,0.05)",padding:"3px 8px",borderRadius:8,
+                border:"1px solid rgba(255,255,255,0.08)" }}>{f}</span>
+            ))}
+          </div>
+          {/* Input */}
+          <input type="password" placeholder="AIza... (Gemini API Key)" value={apiKey}
+            onChange={e=>{ setApiKey(e.target.value); setVerifyError(""); }}
+            onKeyDown={e=>e.key==="Enter"&&apiKey.trim()&&!verifying&&verifyKey()}
+            style={{ width:"100%",padding:"13px 15px",borderRadius:12,
+              background:"rgba(255,255,255,0.06)",
+              border:"1px solid "+(verifyError?"rgba(234,67,53,0.6)":"rgba(66,133,244,0.32)"),
+              color:"white",fontSize:13,fontFamily:"monospace",marginBottom:8,
+              boxSizing:"border-box" }}/>
+          {/* Error message */}
+          {verifyError && (
+            <div style={{ marginBottom:10,padding:"8px 12px",borderRadius:10,
+              background:"rgba(234,67,53,0.1)",border:"1px solid rgba(234,67,53,0.35)",
+              color:"#EA4335",fontSize:12,lineHeight:1.5 }}>
+              {verifyError}
+            </div>
+          )}
+          <button onClick={verifyKey} disabled={!apiKey.trim()||verifying}
+            onMouseOver={e=>{ if(apiKey.trim()&&!verifying) e.currentTarget.style.transform="translateY(-2px)"; }}
+            onMouseOut={e=>e.currentTarget.style.transform="translateY(0)"}
+            style={{ width:"100%",padding:"14px",borderRadius:12,border:"none",
+              background:apiKey.trim()&&!verifying?"linear-gradient(135deg,#4285F4,#34A853)":"rgba(255,255,255,0.1)",
+              color:"white",fontSize:15,fontFamily:"Georgia,serif",
+              cursor:apiKey.trim()&&!verifying?"pointer":"default",fontWeight:"bold",letterSpacing:1,
+              transition:"all 0.3s",boxShadow:apiKey.trim()&&!verifying?"0 0 22px rgba(66,133,244,0.35)":"none",
+              display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
+            {verifying
+              ? <><div style={{ width:16,height:16,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.3)",borderTopColor:"white",animation:"rotateSlow 0.8s linear infinite" }}/> Verifying key...</>
+              : "🚀 Launch Matdata Mitra"
+            }
+          </button>
+          <div style={{ marginTop:14,fontSize:10,color:"rgba(255,255,255,0.22)",textAlign:"center" }}>
+            Get free API key at <span style={{color:"#4285F4"}}>aistudio.google.com</span>
+          </div>
+          <div style={{ height:3,background:"linear-gradient(90deg,#138808 33%,#fff 33% 66%,#FF9933 66%)",
+            borderRadius:"0 0 2px 2px",position:"absolute",bottom:0,left:0,right:0 }}/>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── MAIN CHAT SCREEN ────────────────────────────────────────────────────
+  const T = darkMode ? THEMES.dark : THEMES.light;
+  const fab = FABS.find(f=>f.id===activeModule);
+
+  return (
+    <div style={{ minHeight:"100vh",width:"100%",background:T.bg,
+      fontFamily:"Georgia,serif",position:"relative",overflow:"hidden",
+      display:"flex",flexDirection:"column",transition:"background 0.4s" }}>
+
+      {/* Background */}
+      <div style={{ position:"fixed",inset:0,zIndex:0,pointerEvents:"none",overflow:"hidden" }}>
+        <div style={{ position:"absolute",inset:0,opacity:T.mapOpacity,transition:"opacity 0.4s" }}
+          dangerouslySetInnerHTML={{__html:ELECTION_BG_SVG}}/>
+        <div style={{ position:"absolute",inset:0,
+          background:darkMode
+            ?"radial-gradient(ellipse 70% 60% at 50% 45%,transparent 40%,rgba(10,10,26,0.55) 100%)"
+            :"radial-gradient(ellipse 70% 60% at 50% 45%,transparent 40%,rgba(240,244,255,0.5) 100%)",
+          transition:"background 0.4s" }}/>
+      </div>
+      {particles.map(p=>(
+        <div key={p.id} style={{ position:"fixed",left:p.x+"%",top:p.y+"%",
+          width:p.size+"px",height:p.size+"px",borderRadius:"50%",background:p.color,
+          opacity:darkMode?0.42:0.22,pointerEvents:"none",zIndex:1,
+          animation:`float ${p.duration}s ${p.delay}s ease-in-out infinite` }}/>
+      ))}
+
+      {/* Top tricolor */}
+      <div style={{ height:4,background:"linear-gradient(90deg,#FF9933 33%,#FFFFFF 33% 66%,#138808 66%)",position:"relative",zIndex:10 }}/>
+
+      {/* ── ENHANCED NEWS TICKER ── */}
+      <div style={{ position:"relative",zIndex:10,overflow:"hidden",
+        background:darkMode?"rgba(0,0,0,0.45)":"rgba(255,153,51,0.07)",
+        borderBottom:"1px solid rgba(255,153,51,0.22)",height:26,
+        display:"flex",alignItems:"center" }}>
+        {/* Live badge */}
+        <div style={{ flexShrink:0,display:"flex",alignItems:"center",gap:5,
+          padding:"0 10px",borderRight:"1px solid rgba(255,153,51,0.25)",height:"100%",
+          background:darkMode?"rgba(255,153,51,0.1)":"rgba(255,153,51,0.12)" }}>
+          <div style={{ width:6,height:6,borderRadius:"50%",background:"#EA4335",animation:"pulse 1.5s infinite" }}/>
+          <span style={{ fontSize:9,fontWeight:"bold",color:"#EA4335",letterSpacing:2 }}>LIVE</span>
+        </div>
+        <div style={{ flex:1,overflow:"hidden" }}>
+          <div style={{ display:"inline-flex",gap:0,
+            animation:"ticker 80s linear infinite",whiteSpace:"nowrap" }}>
+            {[...NEWS_TICKER,...NEWS_TICKER].map((item,i)=>(
+              <span key={i} style={{ padding:"0 32px",fontSize:10,letterSpacing:0.5,
+                color:darkMode?"rgba(255,153,51,0.8)":"rgba(160,70,0,0.85)" }}>
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Header */}
+      <div style={{ position:"relative",zIndex:10,padding:"12px 18px",
+        background:T.headerBg,backdropFilter:"blur(20px)",
+        borderBottom:"1px solid rgba(66,133,244,0.2)",
+        animation:"borderGlow 3s ease-in-out infinite",transition:"background 0.4s" }}>
+        <div style={{ display:"flex",alignItems:"center",gap:12,maxWidth:720,margin:"0 auto" }}>
+          <div style={{ width:46,height:46,borderRadius:"50%",
+            background:"linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335)",
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,
+            boxShadow:"0 0 20px rgba(66,133,244,0.5)",animation:"rotateSlow 10s linear infinite" }}>🗳️</div>
+          <div>
+            <div style={{ fontSize:20,fontWeight:"bold",letterSpacing:1,
+              background:"linear-gradient(90deg,#FF9933,#138808,#FF9933)",
+              backgroundSize:"200%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
+              animation:"shimmer 3s linear infinite" }}>Matdata Mitra</div>
+            <div style={{ display:"flex",alignItems:"center",gap:6 }}>
+              <span style={{ fontSize:9,color:T.subText,letterSpacing:2 }}>🇮🇳 INDIA ELECTION ASSISTANT</span>
+              <span style={{ fontSize:9,color:"#4285F4",background:"rgba(66,133,244,0.15)",
+                padding:"1px 7px",borderRadius:8,border:"1px solid rgba(66,133,244,0.3)",letterSpacing:1 }}>✨ Gemini</span>
+            </div>
+          </div>
+          <div style={{ marginLeft:"auto",display:"flex",alignItems:"center",gap:10 }}>
+            {/* Language toggle */}
+            <button className="lang-btn" onClick={()=>setLang(l=>l==="en"?"hi":"en")} title="Switch Language"
+              style={{ padding:"5px 9px",borderRadius:9,border:"1px solid rgba(255,153,51,0.4)",
+                background:"rgba(255,153,51,0.1)",color:"rgba(255,255,255,0.85)",
+                fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:"bold",
+                transition:"all 0.25s",letterSpacing:0.5 }}>
+              {lang==="en"?"हि":"EN"}
+            </button>
+            <button onClick={()=>setDarkMode(d=>!d)}
+              style={{ width:34,height:34,borderRadius:"50%",
+                border:"1px solid rgba(255,153,51,0.4)",
+                background:darkMode?"rgba(255,153,51,0.15)":"rgba(255,153,51,0.2)",
+                cursor:"pointer",fontSize:17,display:"flex",alignItems:"center",justifyContent:"center",
+                transition:"all 0.3s" }}>{darkMode?"☀️":"🌙"}</button>
+            <div style={{ textAlign:"right" }}>
+              <div style={{ display:"flex",alignItems:"center",gap:5 }}>
+                <div style={{ width:6,height:6,borderRadius:"50%",background:"#34A853",animation:"pulse 2s infinite" }}/>
+                <span style={{ fontSize:10,color:"#34A853",letterSpacing:1 }}>LIVE</span>
+              </div>
+              <div style={{ fontSize:9,color:T.subText,marginTop:1 }}>Google Gemini AI</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── TAB BAR ── */}
+      <div style={{ position:"relative",zIndex:10,
+        background:darkMode?"rgba(0,0,0,0.4)":"rgba(255,255,255,0.65)",
+        backdropFilter:"blur(14px)",borderBottom:"1px solid rgba(255,255,255,0.07)",
+        transition:"background 0.4s" }}>
+        <div style={{ display:"flex",overflowX:"auto",gap:4,padding:"8px 12px",maxWidth:720,margin:"0 auto",
+          scrollbarWidth:"none" }}>
+          {TABS.map(tab=>{
+            const active = activeTab===tab.id;
+            const tabColors = { chat:"#4285F4",states:"#FF9933",quiz:"#4285F4",finder:"#34A853",calendar:"#FBBC05",checklist:"#34A853" };
+            const c = tabColors[tab.id]||"#4285F4";
+            return (
+              <button key={tab.id} className="tab-btn"
+                onClick={()=>{ setActiveTab(tab.id); if(activeModule) setActiveModule(null); }}
+                style={{ flexShrink:0,padding:"7px 14px",borderRadius:20,
+                  background:active?c+"22":"transparent",
+                  border:`1px solid ${active?c+"66":"rgba(255,255,255,0.12)"}`,
+                  color:active?c:T.subText,fontSize:11,cursor:"pointer",
+                  fontFamily:"Georgia,serif",fontWeight:active?"bold":"normal",
+                  whiteSpace:"nowrap",letterSpacing:active?0.5:0 }}>
+                {tab.icon} {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Quick questions — only on chat tab */}
+      {activeTab==="chat" && (
+        <div style={{ position:"relative",zIndex:10,padding:"8px 14px",
+          background:darkMode?"rgba(0,0,0,0.3)":"rgba(255,255,255,0.5)",
+          backdropFilter:"blur(10px)",borderBottom:"1px solid rgba(255,255,255,0.05)",
+          transition:"background 0.4s" }}>
+          <div style={{ maxWidth:720,margin:"0 auto",display:"flex",gap:7,overflowX:"auto",paddingBottom:2,scrollbarWidth:"none" }}>
+            {QUICK_QUESTIONS.map((q,i)=>(
+              <button key={i} className="quick-btn" onClick={()=>sendMessage(q.q)}
+                style={{ flexShrink:0,padding:"5px 11px",borderRadius:18,
+                  background:"rgba(66,133,244,0.1)",border:"1px solid rgba(66,133,244,0.22)",
+                  color:T.text,fontSize:10,cursor:"pointer",transition:"all 0.2s",
+                  whiteSpace:"nowrap",fontFamily:"Georgia,serif" }}>{q.label}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── CONTENT AREA ── */}
+      <div style={{ flex:1,overflowY:"auto",position:"relative",zIndex:10 }}>
+
+        {/* CHAT TAB */}
+        {activeTab==="chat" && (
+          <>
+            <div style={{ padding:"16px 14px",maxWidth:720,width:"100%",margin:"0 auto",
+              display:"flex",flexDirection:"column",gap:14 }}>
+              {messages.map((msg,i)=>(
+                <div key={i} className="msg-bubble"
+                  style={{ display:"flex",flexDirection:"column",alignItems:msg.role==="user"?"flex-end":"flex-start" }}>
+                  {msg.role==="assistant" && (
+                    <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:5 }}>
+                      <div style={{ width:26,height:26,borderRadius:"50%",
+                        background:"linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335)",
+                        display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,
+                        boxShadow:"0 0 10px rgba(66,133,244,0.4)" }}>✨</div>
+                      <span style={{ fontSize:10,color:"rgba(66,133,244,0.9)",letterSpacing:1 }}>MATDATA MITRA</span>
+                    </div>
+                  )}
+                  <div style={{ maxWidth:"86%",padding:"13px 17px",
+                    borderRadius:msg.role==="user"?"20px 4px 20px 20px":"4px 20px 20px 20px",
+                    background:msg.role==="user"?T.userBubble:T.cardBg,
+                    border:msg.role==="user"?T.userBorder:"1px solid "+T.borderColor,
+                    backdropFilter:"blur(12px)",color:T.text,fontSize:13,lineHeight:1.72,
+                    boxShadow:"0 4px 20px rgba(0,0,0,0.13)",
+                    position:"relative",overflow:"hidden",transition:"background 0.4s,color 0.4s" }}>
+                    {msg.role==="assistant" && (
+                      <div style={{ position:"absolute",top:0,left:0,right:0,height:2,
+                        background:"linear-gradient(90deg,#4285F4,#34A853,#FBBC05,#EA4335)" }}/>
+                    )}
+                    {formatMessage(msg.content)}
+                  {/* Share & Copy actions for assistant messages */}
+                  {msg.role==="assistant" && (
+                    <div style={{ display:"flex",gap:6,marginTop:8,paddingTop:6,borderTop:"1px solid rgba(255,255,255,0.07)" }}>
+                      <button className="share-btn" onClick={()=>shareMsg(msg.content)}
+                        title="Share on WhatsApp"
+                        style={{ padding:"3px 9px",borderRadius:8,border:"1px solid rgba(37,211,102,0.35)",
+                          background:"rgba(37,211,102,0.09)",color:"#25D366",fontSize:10,
+                          cursor:"pointer",opacity:0.7,transition:"all 0.2s",fontFamily:"Georgia,serif" }}>
+                        📤 Share
+                      </button>
+                      <button className="share-btn" onClick={()=>copyMsg(msg.content,i)}
+                        title="Copy text"
+                        style={{ padding:"3px 9px",borderRadius:8,border:"1px solid rgba(66,133,244,0.3)",
+                          background:"rgba(66,133,244,0.09)",color:"#4285F4",fontSize:10,
+                          cursor:"pointer",opacity:0.7,transition:"all 0.2s",fontFamily:"Georgia,serif" }}>
+                        {copiedIdx===i?"✓ Copied":"📋 Copy"}
+                      </button>
+                    </div>
+                  )}
+                  </div>
+                </div>
+              ))}
+              {loading && (
+                <div className="msg-bubble" style={{ display:"flex",alignItems:"flex-start",gap:8 }}>
+                  <div style={{ width:26,height:26,borderRadius:"50%",
+                    background:"linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335)",
+                    display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0 }}>✨</div>
+                  <div style={{ padding:"13px 17px",borderRadius:"4px 20px 20px 20px",
+                    background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
+                    backdropFilter:"blur(12px)" }}>
+                    <TypingDots/>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef}/>
+            </div>
+
+            {/* Input */}
+            <div style={{ position:"sticky",bottom:0,zIndex:20,
+              padding:"10px 14px 14px",background:T.inputBg,
+              backdropFilter:"blur(20px)",borderTop:"1px solid rgba(66,133,244,0.15)",
+              transition:"background 0.4s" }}>
+              <div style={{ maxWidth:720,margin:"0 auto",display:"flex",gap:9,alignItems:"flex-end" }}>
+                {/* Voice input button */}
+                <button onClick={startListening} disabled={loading} title="Voice Input (Mic)"
+                  style={{ width:44,height:44,borderRadius:"50%",flexShrink:0,border:"none",
+                    background:listening?"rgba(234,67,53,0.25)":"rgba(234,67,53,0.1)",
+                    color:listening?"#EA4335":"rgba(234,67,53,0.65)",fontSize:19,cursor:"pointer",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    border:"2px solid "+(listening?"#EA4335":"rgba(234,67,53,0.3)"),
+                    animation:listening?"micPulse 1.2s infinite":"none",
+                    transition:"all 0.25s" }}>🎤</button>
+                <textarea value={input}
+                  onChange={e=>setInput(e.target.value)} onKeyDown={handleKey}
+                  placeholder={L.placeholder}
+                  rows={1} disabled={loading}
+                  style={{ flex:1,padding:"12px 15px",borderRadius:14,
+                    background:T.inputField,
+                    border:"1px solid rgba(66,133,244,0.25)",
+                    color:T.text,fontSize:13,fontFamily:"Georgia,serif",
+                    resize:"none",transition:"all 0.3s",boxSizing:"border-box",lineHeight:1.5,
+                    outline:"none" }}
+                  onInput={e=>{ e.target.style.height="auto"; e.target.style.height=Math.min(e.target.scrollHeight,120)+"px"; }}
+                />
+                <button className="send-btn" onClick={()=>sendMessage()} disabled={loading||!input.trim()}
+                  style={{ width:46,height:46,borderRadius:"50%",border:"none",
+                    background:input.trim()&&!loading?"linear-gradient(135deg,#4285F4,#34A853)":"rgba(255,255,255,0.1)",
+                    color:"white",fontSize:19,cursor:input.trim()&&!loading?"pointer":"default",
+                    transition:"all 0.3s",display:"flex",alignItems:"center",justifyContent:"center",
+                    boxShadow:input.trim()?"0 0 15px rgba(66,133,244,0.4)":"none",flexShrink:0 }}>
+                  {loading?"⏳":"🚀"}
+                </button>
+              </div>
+              <div style={{ maxWidth:720,margin:"5px auto 0",textAlign:"center",
+                fontSize:9,color:T.dimText,letterSpacing:1 }}>
+                {L.footer}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* OTHER TABS */}
+        {activeTab==="states"    && <StatesPanel    callGeminiDirect={callGeminiDirect} T={T} darkMode={darkMode}/>}
+        {activeTab==="quiz"      && <QuizPanel      callGeminiDirect={callGeminiDirect} T={T} darkMode={darkMode}/>}
+        {activeTab==="finder"    && <FinderPanel    callGeminiDirect={callGeminiDirect} T={T} darkMode={darkMode}/>}
+        {activeTab==="calendar"  && <CalendarPanel  T={T} darkMode={darkMode}/>}
+        {activeTab==="checklist" && <ChecklistPanel T={T} darkMode={darkMode}/>}
+      </div>
+
+      {/* ── STATUS BAR (chat tab only) ── */}
+      {activeTab==="chat" && (
+        <div style={{ position:"fixed",bottom:90,right:10,zIndex:999,
+          width:barOpen?216:42,transition:"width 0.35s cubic-bezier(.4,0,.2,1)",overflow:"hidden" }}>
+          <div style={{ background:T.statusBg,backdropFilter:"blur(18px)",
+            border:"1px solid "+(offlineMode?"rgba(234,67,53,0.5)":"rgba(66,133,244,0.5)"),
+            borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,0.45)",overflow:"hidden" }}>
+            <div onClick={()=>setBarOpen(o=>!o)}
+              style={{ display:"flex",alignItems:"center",justifyContent:barOpen?"space-between":"center",
+                padding:"8px 11px",cursor:"pointer",
+                borderBottom:barOpen?"1px solid rgba(255,255,255,0.07)":"none" }}>
+              <span style={{ fontSize:15 }}>{offlineMode?"📚":"✨"}</span>
+              {barOpen && <span style={{ fontSize:9,color:"rgba(255,255,255,0.45)",letterSpacing:1 }}>API STATUS</span>}
+              {barOpen && <span style={{ fontSize:11,color:"rgba(255,255,255,0.35)" }}>▼</span>}
+            </div>
+            {barOpen && (
+              <div style={{ padding:"9px 11px 11px",fontFamily:"Georgia,serif" }}>
+                <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:7 }}>
+                  <span style={{ fontSize:9,color:"rgba(255,255,255,0.4)",letterSpacing:1 }}>ENGINE</span>
+                  <span style={{ fontSize:9,fontWeight:"bold",letterSpacing:1,padding:"1px 7px",borderRadius:7,
+                    background:offlineMode?"rgba(234,67,53,0.2)":"rgba(66,133,244,0.2)",
+                    color:offlineMode?"#EA4335":"#4285F4",
+                    border:"1px solid "+(offlineMode?"rgba(234,67,53,0.4)":"rgba(66,133,244,0.4)") }}>
+                    {offlineMode?"📚 OFFLINE":"✨ GEMINI"}
+                  </span>
+                </div>
+                <div style={{ marginBottom:6 }}>
+                  <div style={{ display:"flex",justifyContent:"space-between",marginBottom:3 }}>
+                    <span style={{ fontSize:9,color:"rgba(255,255,255,0.4)",letterSpacing:1 }}>API CALLS</span>
+                    <span style={{ fontSize:9,color:"rgba(255,255,255,0.8)",fontWeight:"bold" }}>{apiCallsUsed} / {DAILY_LIMIT}</span>
+                  </div>
+                  <div style={{ height:4,borderRadius:2,background:"rgba(255,255,255,0.08)",overflow:"hidden" }}>
+                    <div style={{ height:"100%",borderRadius:2,
+                      width:(apiCallsUsed/DAILY_LIMIT*100)+"%",
+                      background:apiCallsUsed>=DAILY_LIMIT?"#EA4335":apiCallsUsed>35?"#FBBC05":"linear-gradient(90deg,#4285F4,#34A853)",
+                      transition:"width 0.5s ease" }}/>
+                  </div>
+                </div>
+                {cooldown>0 && (
+                  <div style={{ background:"rgba(234,67,53,0.1)",border:"1px solid rgba(234,67,53,0.3)",
+                    borderRadius:7,padding:"5px 8px",marginBottom:5 }}>
+                    <div style={{ fontSize:9,color:"#EA4335",letterSpacing:1,marginBottom:2 }}>⏱ COOLDOWN: {cooldown}s</div>
+                    <div style={{ height:3,borderRadius:1.5,background:"rgba(255,255,255,0.08)",overflow:"hidden" }}>
+                      <div style={{ height:"100%",borderRadius:1.5,
+                        width:((COOLDOWN_SECONDS-cooldown)/COOLDOWN_SECONDS*100)+"%",
+                        background:"#EA4335",transition:"width 1s linear" }}/>
+                    </div>
+                  </div>
+                )}
+                <div style={{ display:"flex",alignItems:"center",gap:4 }}>
+                  <div style={{ width:5,height:5,borderRadius:"50%",
+                    background:offlineMode?"#EA4335":"#34A853",animation:"pulse 2s infinite" }}/>
+                  <span style={{ fontSize:8,color:T.subText,letterSpacing:1 }}>
+                    {offlineMode?"OFFLINE — KB ACTIVE":apiCallsUsed>=DAILY_LIMIT?"LIMIT REACHED":"ONLINE & READY"}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── FABs (chat tab only) ── */}
+      {activeTab==="chat" && (() => {
+        return (
+          <>
+            <div style={{ position:"fixed",left:10,bottom:108,zIndex:998,display:"flex",flexDirection:"column",gap:9 }}>
+              {FABS.map(f=>(
+                <div key={f.id} className="fab-btn" style={{ position:"relative",display:"flex",alignItems:"center" }}>
+                  <div className="fab-tip" style={{
+                    position:"absolute",left:52,whiteSpace:"nowrap",
+                    background:"rgba(10,10,26,0.92)",backdropFilter:"blur(10px)",
+                    border:"1px solid "+f.color+"55",borderRadius:9,
+                    padding:"4px 11px",fontSize:11,color:"rgba(255,255,255,0.85)",
+                    opacity:0,transform:"translateX(-6px)",
+                    transition:"opacity 0.2s,transform 0.2s",pointerEvents:"none",
+                    boxShadow:"0 4px 14px rgba(0,0,0,0.35)",letterSpacing:0.5,fontFamily:"Georgia,serif" }}>{f.label}</div>
+                  <button onClick={()=>activeModule===f.id?setActiveModule(null):openModule(f)}
+                    style={{ width:44,height:44,borderRadius:"50%",
+                      border:"2px solid "+f.color+"88",
+                      background:activeModule===f.id?f.color:"rgba(10,10,26,0.85)",
+                      backdropFilter:"blur(12px)",color:"white",fontSize:19,cursor:"pointer",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      boxShadow:"0 0 14px "+f.color+"44,0 4px 12px rgba(0,0,0,0.4)",
+                      transition:"all 0.25s",
+                      animation:activeModule===f.id?"pulse 1.5s infinite":"none" }}>{f.icon}</button>
+                </div>
+              ))}
+            </div>
+
+            {/* Module panel */}
+            {activeModule && fab && (
+              <div className="mod-panel" style={{
+                position:"fixed",left:0,right:0,bottom:0,zIndex:997,maxHeight:"72vh",
+                background:darkMode?"rgba(8,10,24,0.97)":"rgba(245,248,255,0.97)",
+                backdropFilter:"blur(24px)",borderTop:"2px solid "+fab.color+"88",
+                borderRadius:"22px 22px 0 0",display:"flex",flexDirection:"column",
+                boxShadow:"0 -8px 40px rgba(0,0,0,0.5)",fontFamily:"Georgia,serif" }}>
+                <div style={{ display:"flex",alignItems:"center",gap:10,padding:"13px 18px",
+                  borderBottom:"1px solid rgba(255,255,255,0.07)",flexShrink:0 }}>
+                  <div style={{ width:36,height:36,borderRadius:"50%",
+                    background:"linear-gradient(135deg,"+fab.color+","+fab.color+"88)",
+                    display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,
+                    boxShadow:"0 0 14px "+fab.color+"55",animation:"gemSpin 8s linear infinite" }}>{fab.icon}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:14,fontWeight:"bold",color:fab.color,letterSpacing:1 }}>{fab.label}</div>
+                    <div style={{ fontSize:9,color:T.subText,letterSpacing:2 }}>✨ POWERED BY GOOGLE GEMINI AI</div>
+                  </div>
+                  <button onClick={()=>setActiveModule(null)}
+                    style={{ width:30,height:30,borderRadius:"50%",border:"1px solid rgba(255,255,255,0.15)",
+                      background:"rgba(255,255,255,0.06)",color:T.text,fontSize:15,cursor:"pointer",
+                      display:"flex",alignItems:"center",justifyContent:"center" }}>✕</button>
+                </div>
+
+                {activeModule==="access" && !moduleResult && (
+                  <div style={{ padding:"16px 18px",borderBottom:"1px solid rgba(255,255,255,0.07)",flexShrink:0 }}>
+                    <div style={{ fontSize:13,color:T.text,marginBottom:10,lineHeight:1.6 }}>
+                      ♿ Enter your <strong style={{color:"#FBBC05"}}>disability/condition</strong> for a personalised ECI accessibility report:
+                    </div>
+                    <div style={{ display:"flex",gap:9 }}>
+                      <input value={accessInput} onChange={e=>setAccessInput(e.target.value)}
+                        onKeyDown={e=>e.key==="Enter"&&runAccessScan()}
+                        placeholder="e.g. Wheelchair user, Visual impairment, Hearing loss..."
+                        style={{ flex:1,padding:"10px 13px",borderRadius:11,
+                          background:darkMode?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.85)",
+                          border:"1px solid rgba(251,188,5,0.4)",color:T.text,fontSize:12,fontFamily:"Georgia,serif" }}/>
+                      <button onClick={runAccessScan} disabled={!accessInput.trim()||moduleLoading}
+                        style={{ padding:"10px 18px",borderRadius:11,border:"none",
+                          background:accessInput.trim()?"linear-gradient(135deg,#FBBC05,#FF9933)":"rgba(255,255,255,0.1)",
+                          color:"white",fontWeight:"bold",cursor:accessInput.trim()?"pointer":"default",
+                          fontSize:12,fontFamily:"Georgia,serif" }}>
+                        {moduleLoading?"⏳":"🔍 Scan"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {activeModule==="access" && moduleResult && (
+                  <div style={{ padding:"8px 18px",flexShrink:0,borderBottom:"1px solid rgba(255,255,255,0.07)" }}>
+                    <button onClick={()=>{setModuleResult("");setAccessInput("");}}
+                      style={{ padding:"5px 14px",borderRadius:9,border:"1px solid rgba(251,188,5,0.4)",
+                        background:"rgba(251,188,5,0.1)",color:"#FBBC05",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif" }}>
+                      ← New Scan
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ flex:1,overflowY:"auto",padding:"14px 18px" }}>
+                  {moduleLoading && (
+                    <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"36px 0",gap:14 }}>
+                      <div style={{ width:46,height:46,borderRadius:"50%",
+                        background:"linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335)",
+                        animation:"gemSpin 1s linear infinite",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20 }}>✨</div>
+                      <div style={{ color:T.subText,fontSize:11,letterSpacing:2 }}>GEMINI IS THINKING...</div>
+                      <div style={{ display:"flex",gap:5 }}>
+                        {[0,1,2].map(i=><div key={i} style={{width:7,height:7,borderRadius:"50%",background:"#4285F4",animation:`bounce 1.2s ${i*0.2}s infinite`}}/>)}
+                      </div>
+                    </div>
+                  )}
+                  {!moduleLoading && moduleResult && (
+                    <div style={{ fontSize:13,color:T.text,lineHeight:1.75 }}>
+                      {renderModuleResult(moduleResult)}
+                    </div>
+                  )}
+                  {!moduleLoading && !moduleResult && activeModule!=="access" && (
+                    <div style={{ textAlign:"center",color:T.subText,padding:"28px 0",fontSize:13 }}>Tap the button again to reload.</div>
+                  )}
+                  {!moduleLoading && !moduleResult && activeModule==="access" && (
+                    <div style={{ textAlign:"center",color:T.subText,padding:"28px 0",fontSize:13 }}>
+                      Enter your condition above and tap <strong style={{color:"#FBBC05"}}>Scan</strong>.
+                    </div>
+                  )}
+                </div>
+                <div style={{ height:3,background:"linear-gradient(90deg,#FF9933 33%,#fff 33% 66%,#138808 66%)",flexShrink:0 }}/>
+              </div>
+            )}
+          </>
+        );
+      })()}
+
+      {/* Bottom tricolor */}
+      <div style={{ height:3,background:"linear-gradient(90deg,#138808 33%,#FFFFFF 33% 66%,#FF9933 66%)",position:"relative",zIndex:10,flexShrink:0 }}/>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<ElectionAssistant/>);
+</script>
+</body>
+</html>
